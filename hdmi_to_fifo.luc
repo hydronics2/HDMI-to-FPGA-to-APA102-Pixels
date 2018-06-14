@@ -1,0 +1,124 @@
+module hdmi_to_fifo (
+
+    input rst,  // reset
+    
+    input tmds[4],
+    input tmdsb[4],
+    
+    
+    output ledOut[7], 
+    
+    output newTxDataFlag,
+    output transmitByte[8],
+    //input txBusy,
+    
+    output redOut[8],
+    output greenOut[8],
+    output blueOut[8],
+    output writeFifo,
+    output hdmiClk,
+    
+    output hdmi_vsyncFlag,
+    
+    output startWritingFlag,
+    
+    output out
+  ) {
+  
+  //start reading pixels at location 40,30 (x,y) on HDMI screen 1270 x 800
+  const X_START = 40; //
+  const Y_START = 30; //
+  
+  const X_LENGTH = 102; //34 pixels wide times 3 => 102
+  const Y_LENGTH = 21; //20 pixels deep
+  
+ 
+  
+  dvi_decoder hdmi_in (.rst(rst));
+  
+  .clk(hdmi_in.pclk) {  //this is the clock speed inherited from the HDMI... not sure how fast it is?
+  
+    fsm state = {IDLE, READ}; // our state machine
+    
+    dff x_ctr[11];
+    dff y_ctr[11];
+    
+    dff red[8];
+    dff green[8];
+    dff blue[8];
+    
+    
+    dff xAxis[8]; //count 101 pixels wide per row of 3 panels
+ 
+    dff pixelAddress[15]; // 10 allows for 2^10 = 1023 bytes... we need 680 per color per panelOneBlArray
+  }
+  
+
+  
+    always {
+    out = 0;
+    redOut = 0;
+    greenOut = 0;
+    blueOut = 0;
+    writeFifo = 0;
+    startWritingFlag = 0;
+    
+    hdmi_vsyncFlag = 0;
+    
+    hdmiClk = hdmi_in.pclk;
+    
+    hdmi_in.tmds = tmds;
+    hdmi_in.tmdsb = tmdsb;
+    
+    
+    red.d = hdmi_in.red;
+    green.d = hdmi_in.green;
+    blue.d = hdmi_in.blue;
+    
+    ledOut = 0;
+    
+    transmitByte = 0;
+    newTxDataFlag = 0;  
+    
+    
+    if (hdmi_in.vsync) {
+      x_ctr.d = 0;
+      y_ctr.d = 0;
+      pixelAddress.d = 0;
+      ledOut = 8hFF;
+      hdmi_vsyncFlag = 1;
+    }
+
+    if(hdmi_in.hsync)
+      x_ctr.d = 0;
+      
+    if (hdmi_in.de)
+      x_ctr.d = x_ctr.q + 1;
+
+    if(x_ctr.q == 1 && hdmi_in.de) //goes up once every horizontal line arbitrary set at 1200... using hsync didn't work(?) so this was the fix
+      y_ctr.d = y_ctr.q + 1;
+      
+   
+    //panel 0
+    if(x_ctr.q >= X_START && y_ctr.q >= Y_START && hdmi_in.de) // active flag for Panel #1 module
+    {
+      if(xAxis.q < X_LENGTH && y_ctr.q < 252) //220 rows + starting at 30 => 250 (plus acouple extra)
+      {
+        writeFifo = 1;
+        redOut = red.q;
+        greenOut = green.q;
+        blueOut = blue.q;
+        pixelAddress.d = pixelAddress.q + 1;
+        xAxis.d = xAxis.q + 1;
+      }
+    }
+    
+    if(!hdmi_in.de)  //out of bounds
+      xAxis.d = 0;
+      
+    if(y_ctr.q == 300)
+      startWritingFlag = 1;
+
+    
+  }
+}

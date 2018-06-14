@@ -1,0 +1,192 @@
+// sets display area of the HDMI screen to project to the APA102 led grid...   
+// x from 40 to 448
+// y from 30 to 250
+
+//dragging the mouse over the above acstive screen area the 2nd LED (led[1]) to turn ON
+
+
+//05/17/18 - fixed verical line counting... starts at 30 lines down now...
+//05/19/18 - two panels writing next to each... only missing top line
+//05/20/18 - first panel is good exept the first 2 leds.. 2nd panel still missing top row..
+//05/21/18 - working on two led panels, sampling 21 rows, printing 20 rows
+//06/05/18 - fifo working on one panel
+//06/10/18 - double fifo into ram.. started writing into SDram. 
+//06/11/18 - memory arbitrary seems to be working... does not write to the end of the panel and arrows show up fuzzy... guessing this is a writing to address issue.
+//06/11/18 - working accept for the bottom row!! memory arbiter to SD-ram. 6:55pm
+//06/13/18 - pretty much saving the first vertical row 11 panels 4000+ LEDs and writing to one panel
+//6/13/18 - saving 33 panels to SDram and tested writing the 1st and last panel successfully. #18 code
+
+
+
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,       // AVR RX buffer full
+    
+    
+    
+    
+    input hdmi2_tmds [4],   // HDMI In
+    input hdmi2_tmdsb [4],
+    inout hdmi2_sda,        // EDID Interface
+    input hdmi2_scl,
+    
+    
+    output apa102_data0,
+    //output apa102_data1,
+    output apa102_sck,
+    
+    output<Sdram.out> sdramOut,   // SDRAM outputs
+    inout<Sdram.inOut> sdramInOut // SDRAM inout
+    
+    
+  ) {
+  
+  sig rst;  // reset signal
+  
+  //start reading pixels at location 40,30 (x,y) on HDMI screen 1270 x 800
+  const X_START = 40; //
+  const Y_START = 30; //
+  
+  panelRows panelRows; //#1
+  //panelOneTrArray panelOneTrArray; //#2
+  
+  hdmi_to_fifo hdmi_to_fifo(.rst(rst));
+  
+  sig fclk; // 100MHz clock
+ 
+  // boost clock to 100MHz
+  clk_wiz_v3_6 clk_wiz;
+  always {
+    clk_wiz.CLK_IN1 = clk;   // 50MHz in
+    fclk = clk_wiz.CLK_OUT1; // 100MHz out (it's like magic!)
+  }
+
+  .clk(fclk) {
+  
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+    
+    .rst(rst){
+
+    sdram sdram (.sdramInOut(sdramInOut));
+    panel_0 panel_0;
+    spi_master0 spi_out0;
+       
+    fifo_buffer fifo_buffer;
+       
+    avr_interface avr(#CLK_FREQ(100000000));
+      
+      // memory arbiter to connect multiple devices to SDRAM
+      memory_arbiter mem_arb (#DEVICES(2));
+    
+    }
+    // connect up the edid rom using a clock we know will alway be running
+    edid_rom edid (.rst(rst), .sda(hdmi2_sda), .scl(hdmi2_scl));
+    
+    dff gameCounter[26];
+    dff blinkFlag[2];
+  }
+    
+  
+  always {
+    reset_cond.in = ~rst_n;    // input raw inverted reset signal
+    rst = reset_cond.out;      // conditioned reset
+ 
+  
+    // connect inputs of avr
+    avr.cclk = cclk;
+    avr.spi_ss = spi_ss;
+    avr.spi_mosi = spi_mosi;
+    avr.spi_sck = spi_sck;
+    avr.rx = avr_tx;
+    avr.channel = hf; // ADC is unused so disable
+    avr.tx_block = avr_rx_busy; // block TX when AVR is busy
+ 
+    // connect outputs of avr
+    spi_miso = avr.spi_miso;
+    spi_channel = avr.spi_channel;
+    avr_rx = avr.tx;
+    avr.new_tx_data = 0;
+    avr.tx_data = 0;
+    
+    avr.tx_data = panel_0.transmitByte;
+    avr.new_tx_data = panel_0.newTxDataFlag;
+    panel_0.txBusy = avr.tx_busy;    
+    
+    fifo_buffer.hdmi_clk = hdmi_to_fifo.hdmiClk;
+    fifo_buffer.writeFifo = hdmi_to_fifo.writeFifo;
+    
+    fifo_buffer.redIn = hdmi_to_fifo.redOut;
+    fifo_buffer.greenIn = hdmi_to_fifo.greenOut;
+    fifo_buffer.blueIn = hdmi_to_fifo.blueOut;
+    
+    panel_0.readFifoFlag = fifo_buffer.readFifo;
+    
+    panel_0.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    
+
+    panel_0.red = fifo_buffer.redOut1;
+    panel_0.green = fifo_buffer.greenOut1;
+    panel_0.blue = fifo_buffer.blueOut1;
+    panel_0.writeFifo2 = fifo_buffer.writeFifo2;
+    fifo_buffer.getFifo = panel_0.getFifo;
+    
+        
+    panelRows.address = panel_0.rowPixelAddress;
+    panel_0.rowStartPixel = panelRows.rowPixelPanel0; 
+    
+    panel_0.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
+    
+
+    
+    // connect HDMI input
+    hdmi_to_fifo.tmds = hdmi2_tmds;
+    hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
+    
+    
+    spi_out0.data_in = panel_0.ledByteOut;
+    spi_out0.start = panel_0.newSpiData; 
+    panel_0.spiBusySignal = spi_out0.busy;   
+    
+    spi_out0.miso = 1b0;
+    apa102_data0 = spi_out0.mosi;
+    apa102_sck = spi_out0.sck;
+
+        
+    // arbiter to memory connections
+    mem_arb.memIn = sdram.memOut;
+    sdram.memIn = mem_arb.memOut;
+    
+    // image capture to memory arbiter connection
+    mem_arb.devIn[0] = panel_0.memOut;
+    panel_0.memIn = mem_arb.devOut[0];
+    
+    // register adapter to memory connections
+    panel_0.memIn2 = mem_arb.devOut[1];
+    mem_arb.devIn[1] = panel_0.memOut2;   
+ 
+    sdramOut = sdram.sdramOut;              // connect controller to SDRAM     
+
+    
+    gameCounter.d = gameCounter.q + 1;
+    
+    led[0] = gameCounter.q[25];  // this is a heart beat counter ~ 1 per second  
+
+    //led[7:1] = panel_0.ledOut;           //has a default black screen... turns on pixels momentarily if there is red
+        
+ 
+  }
+}
+
+  

@@ -1,0 +1,294 @@
+//#1 bottom left start led
+
+
+//APA 102 led strips receive data as follows
+//  Start frame 32 bits ZEROS
+// LED FRAME consists of three bits 111.... and 5 bits brightnes value followed by one byte each blue, green, red..
+// end frame is 4 bytes 8hFF.
+
+
+module panel_0 (
+
+    input clk,  // clock
+    input rst,
+
+    input red[8],
+    input green[8],
+    input blue[8],
+    input writeFifo2,
+    
+    input readFifoFlag,  //
+    
+    output ledOut[8],
+       
+    input spiBusySignal,
+    output newSpiData,
+    output ledByteOut[8],
+    
+    output rowPixelAddress[5],
+    input rowStartPixel[15], 
+    
+    input startWritingFlag,
+    
+    input hdmi_vsyncFlag,
+    
+    output<Memory.master> memOut,    // memory interface
+    input<Memory.slave> memIn,
+    
+    output<Memory.master> memOut2,    // memory interface
+    input<Memory.slave> memIn2,
+    
+    input txBusy,
+    output newTxDataFlag,
+    output transmitByte[8],
+    
+    output getFifo,
+    
+    output notConnected[8],
+    
+    output out
+    
+  ) {
+  
+  const X_LENGTH = 34; //34 pixels wide
+  const Y_LENGTH = 21; //20 pixels deep
+  
+  .clk(clk) {
+    .rst(rst) {
+      fsm state = {IDLE, READ, WRITE, WAIT, WRITE_BUFFER_TO_SDRAM}; // our state machine
+      
+      // RAM may not be ready for each pixel so we need to buffer the writes
+      mem_write_buffer buffer (#DEPTH(32));
+      
+    }
+    
+    dff ledStartBitCounter[4];
+    dff rgbCounter[4];
+    dff xAxis2[6]; //panel width for counting write cycles
+    dff yAxis[5];  //panel size 34 x 20 pixels
+ 
+    
+    dff pixelAddress[15]; // need 15 bits for 33 panels x 680 => 22,440 pixels per mojo
+    
+    //dff pixelAddressRead[10]; // 10 allows for 2^10 = 1023 bytes... we need 680 per color per panel
+    
+    
+    dff panelControl1[2];
+    
+    
+    dff rgbPixels[24];
+    dff rgbPixelsBuffer[24];
+    
+
+    
+  }
+  
+    // asyncronous fifo for crossing clock domains (pclk to clk)
+  async_fifo fifo (#SIZE(24), #DEPTH(64), .wclk(clk), .rclk(clk), .wrst(rst), .rrst(rst));
+  
+
+  always {
+  
+    notConnected = 0;
+    
+    fifo.wput = writeFifo2;   // always put data into the fifo
+    fifo.rget = 0;   // always get data from the fifo
+   
+    
+    fifo.din[7:0] = red;
+    fifo.din[15:8] = green;
+    fifo.din[23:16] = blue;
+    //fifo.din[31:24] = 8h00;
+    
+    buffer.memIn = memIn;                             // connect buffer to RAM
+    memOut = buffer.memOut;
+ 
+    buffer.devIn.valid = 0;                           // not valid
+    buffer.devIn.write = 1;                           // always a write
+    buffer.devIn.data = rgbPixelsBuffer.q;                       // connect data
+    buffer.devIn.addr = pixelAddress.q;                       // connect address
+    
+    memOut2.valid = 0;                           // not valid
+    memOut2.write = 1;                           // always a write
+    memOut2.data = rgbPixelsBuffer.q;                       // connect data
+    memOut2.addr = pixelAddress.q;                       // connect address   
+    
+    getFifo = 0;
+    
+   
+    out = 0;
+    
+    ledOut = 0;
+    
+    ledByteOut = 0;
+    newSpiData = 0;
+    
+    rowPixelAddress = 0;
+    
+    transmitByte = 0;
+    newTxDataFlag = 0; 
+    
+    if(hdmi_vsyncFlag)
+    {
+      pixelAddress.d = 0;
+      panelControl1.d = 0;    
+    }
+    
+
+    if(panelControl1.q == 0){
+    if(!fifo.empty)
+    { 
+      fifo.rget = 1;
+      rgbPixelsBuffer.d = fifo.dout[23:0];
+      panelControl1.d = 1;
+    }
+    }
+    
+    if(panelControl1.q == 1){
+      if (!buffer.devOut.busy) {                    // if buffer isn't full (busy)
+        buffer.devIn.valid = 1;                     // new command
+        pixelAddress.d = pixelAddress.q + 1;                        // increment the address
+        panelControl1.d = 0;
+        state.d = state.IDLE;
+        if(pixelAddress.q > 22440)  //this is required so it doesn't roll?
+          panelControl1.d = 2;
+      }
+    }
+    
+   
+    if(startWritingFlag == 1)
+    { 
+      panelControl1.d = 3;
+      ledStartBitCounter.d = 0;
+      yAxis.d = 0;
+      xAxis2.d = 0;
+    }
+    
+
+    if(panelControl1.q == 3) 
+    {
+      state.d = state.WRITE; 
+    }   
+    
+
+    case (state.q) { // our FSM
+      // IDLE: Reset everything and wait for HDMI panel#1 pixels.
+      state.IDLE:
+        out = 1;
+
+      state.READ:
+        out = 1;
+      
+      state.WRITE_BUFFER_TO_SDRAM:
+        out = 1;
+        
+        // Write LEDs to strip
+      state.WRITE:
+        //memOut.addr = pixelAddressRead.q;
+        ledOut[0] = 1;
+        if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
+        {  
+          ledByteOut = 8b0;
+          newSpiData = 1;
+          ledStartBitCounter.d = ledStartBitCounter.q + 1;
+ 
+          rowPixelAddress = 0;     
+          pixelAddress.d = 15d22406;  //seems required to call out the start address specifically
+          rgbCounter.d = 0;
+          
+        }
+        if(ledStartBitCounter.q == 5) //1st led frame    
+        { 
+          if(!memIn2.busy){
+            memOut2.valid = 1;            // command is valid
+            memOut2.write = 0;            // perform a read
+            memOut2.addr = pixelAddress.q;
+            ledStartBitCounter.d = 6; 
+          }
+        }
+        if(ledStartBitCounter.q == 6) //1st led frame    
+        {         
+          if(memIn2.valid) //need to wait for the memory to be valid
+          {
+            ledOut[3] = 1;
+            rgbPixels.d = memIn2.data[23:0];
+            ledStartBitCounter.d = 7;
+            rgbCounter.d = 0;
+            if(yAxis.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              pixelAddress.d = pixelAddress.q - 1;
+            }
+            else{
+              pixelAddress.d = pixelAddress.q + 1;
+            }
+          }
+        }
+
+        if(ledStartBitCounter.q == 7)
+        {
+          if(rgbCounter.q == 0 && !spiBusySignal)
+          {
+            xAxis2.d = xAxis2.q + 1;
+            ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
+            newSpiData = 1;
+            rgbCounter.d = 1;
+          }
+          if(rgbCounter.q == 1 && !spiBusySignal)
+          { 
+            ledByteOut = rgbPixels.q[23:16];
+            newSpiData = 1;
+            rgbCounter.d = 2;
+          }          
+          if(rgbCounter.q == 2 && !spiBusySignal)
+          { 
+            ledByteOut = rgbPixels.q[15:8];
+            newSpiData = 1;
+            rgbCounter.d = 3;
+          }  
+          if(rgbCounter.q == 3 && !spiBusySignal)
+          { 
+            ledByteOut = rgbPixels.q[7:0];
+            newSpiData = 1;
+            rgbCounter.d = 4;
+          }
+          if(rgbCounter.q == 4) //wrote RG&B
+          { 
+            if(xAxis2.q == X_LENGTH) //34 ... last pixel in row
+            {
+              rgbCounter.d = 5; //get 1st pixel in next row
+              yAxis.d = yAxis.q + 1; //increment rwo
+            }else
+            {
+              rgbCounter.d = 0;
+              ledStartBitCounter.d = 5; //get the next pixel from SDram
+            }
+          } 
+          if(rgbCounter.q == 5) //get 1st pixel in next row
+          {     
+            rowPixelAddress = yAxis.q;     //this has to be here.. can't be assigned globally for some reason...
+            pixelAddress.d = rowStartPixel;
+            rgbCounter.d = 0;
+            xAxis2.d = 0;
+            ledStartBitCounter.d = 5;  //get the next pixel from SDram
+  
+            if(yAxis.q == Y_LENGTH) //end if wrote 0-19 rows
+            {
+              ledStartBitCounter.d = ledStartBitCounter.q + 1; 
+            }
+          }
+        }
+        
+        if(ledStartBitCounter.q > 7 && ledStartBitCounter.q < 13 && !spiBusySignal) //end frame 4+ bytes of 8hFF
+        {  
+          ledByteOut = 8hff;
+          newSpiData = 1;
+          ledStartBitCounter.d = ledStartBitCounter.q + 1;
+        } 
+        if(ledStartBitCounter.q == 13)
+        {
+          panelControl1.d = 0;
+          state.d = state.IDLE;
+        }
+      } 
+  }
+}

@@ -1,0 +1,77 @@
+module fifo_buffer (
+
+    input clk,        // 
+
+    input rst,        // 
+    
+    input hdmi_clk,
+ 
+    input redIn[8],
+    input greenIn[8],
+    input blueIn[8],
+    input writeFifo,
+    
+    output redOut1[8],
+    output greenOut1[8],
+    output blueOut1[8],
+    output writeFifo2,
+    
+    output readFifo,
+    
+    output newDataFlag,
+    
+    input getFifo,
+    
+    output notConnected[8]
+    
+  ) {
+ 
+  .clk(clk) {
+    .rst(rst) {      
+    }    
+  }
+ 
+ 
+ 
+  // reset conditioner for pclk clock domain
+  reset_conditioner wrst_cond (.clk(hdmi_clk), .in(rst));
+ 
+  // asyncronous fifo for crossing clock domains (pclk to clk)
+  async_fifo fifo (#SIZE(24), #DEPTH(64), .wclk(hdmi_clk), .rclk(clk), .wrst(wrst_cond.out), .rrst(rst)); //going from 128 to 64 kept it from glitching
+ 
+  always {
+    // defaults
+    notConnected = 0;
+    writeFifo2 = 0;
+    
+    fifo.wput = writeFifo;   // always put data into the fifo
+    fifo.rget = 0;   // always get data from the fifo
+   
+    
+    fifo.din[7:0] = redIn;
+    fifo.din[15:8] = greenIn;
+    fifo.din[23:16] = blueIn;
+ 
+
+    redOut1 = 0;
+    greenOut1 = 0;
+    blueOut1 = 0;
+    
+    newDataFlag = 0;
+
+    readFifo = 0;
+    
+    // if new fifo data and camera is configured
+    if (!fifo.empty) {
+      
+      writeFifo2 = 1;
+      fifo.rget = 1;
+      redOut1 = fifo.dout[7:0]; 
+      greenOut1 = fifo.dout[15:8];
+      blueOut1 = fifo.dout[23:16];
+      
+      
+    }
+  
+  }
+}
