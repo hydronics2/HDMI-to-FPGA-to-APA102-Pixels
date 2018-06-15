@@ -1,35 +1,77 @@
 module panelRows (
-    input address[5],  // ROM address
-    output rowPixelPanel0[15]   // ROM output
+    input address0[5],  // ROM address
+    input address3[5],  // ROM address
+    input address5[5],  // ROM address0
+    input address8[5],  // ROM address0
+    input address10[5],  // ROM address0
+    input address22[5],  // ROM address0
+    input address25[5],  // ROM address0
+    input address27[5],  // ROM address0
+    input address30[5],  // ROM address
+    input address32[5],  // ROM address
+    
+    output rowPixelPanel0[15],   // ROM output
+    output rowPixelPanel3[15],   // ROM output
+    output rowPixelPanel5[15],   // ROM output
+    output rowPixelPanel8[15],   // ROM output
+    output rowPixelPanel10[15],   // ROM output
+    output rowPixelPanel22[15],   // ROM output
+    output rowPixelPanel25[15],   // ROM output
+    output rowPixelPanel27[15],   // ROM output
+    output rowPixelPanel30[15],   // ROM output 
+    output rowPixelPanel32[15]   // ROM output
   ) {
  
   const ARRAY_SIZE = 20;
    
   sig bl0[ARRAY_SIZE][15];
-  
+  sig bl3[ARRAY_SIZE][15];
+  sig bl5[ARRAY_SIZE][15];
+  sig bl8[ARRAY_SIZE][15];
+  sig bl10[ARRAY_SIZE][15];
+  sig bl22[ARRAY_SIZE][15];
+  sig bl25[ARRAY_SIZE][15];
+  sig bl27[ARRAY_SIZE][15];
+  sig bl30[ARRAY_SIZE][15];
+  sig bl32[ARRAY_SIZE][15];
  
   always {
     //#1 BL  
-    //startBits = {10d33, 10d34, 10d101, 10d102, 10d169, 10d170, 10d237, 10d238, 10d305, 10d306, 10d373, 10d374, 10d441, 10d442, 10d509, 10d510, 10d577, 10d578, 10d645, 10d646, 10d713, 10d714};
+   
+    //bottom left with no cutouts
+    bl0 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl3 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl5 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl8 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl10 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl22 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl25 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl27 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl30 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl32 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
     
-    //bl0 = {10d67, 10d68, 10d135, 10d136, 10d203, 10d204, 10d271, 10d272, 10d339, 10d340, 10d407, 10d408, 10d475, 10d476, 10d543, 10d544, 10d611, 10d612, 10d679, 10d680};
-    
-    //bl0 = {10d33, 10d34, 10d101, 10d102, 10d169, 10d170, 10d237, 10d238, 10d305, 10d306, 10d373, 10d374, 10d441, 10d442, 10d509, 10d510, 10d577, 10d578, 10d645, 10d646};
-    //bl0 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
-    //bl1
-    //bl2
     //bl3
-    bl0 = {15d20501,15d20570,15d20705,15d20774,15d20909,15d20978,15d21113,15d21182,15d21317,15d21386,15d21521,15d21590,15d21725,15d21794,15d21929,15d21998,15d22133,15d22202,15d22337,15d22406};
+    //bl32 = {15d20501,15d20570,15d20705,15d20774,15d20909,15d20978,15d21113,15d21182,15d21317,15d21386,15d21521,15d21590,15d21725,15d21794,15d21929,15d21998,15d22133,15d22202,15d22337,15d22406};
     
-    //bl24 = {
-    //startBits = {10d33, 10d34, 10d101, 10d102, 10d169, 10d170, 10d237, 10d238, 10d305, 10d306, 10d373, 10d374, 10d441, 10d442, 10d509, 10d510, 10d577, 10d578, 10d645, 10d646};
-    //startBits = {10d679, 10d612, 10d611, 10d544, 10d543, 10d476, 10d475, 10d408, 10d407, 10d340, 10d339, 10d272, 10d271, 10d204, 10d203, 10d136, 10d135, 10d68, 10d67, 10d0};
-    
-    //#1 TR - 
-    //startBits = {10d646, 10d645, 10d578, 10d577, 10d510, 10d509, 10d442, 10d441, 10d374, 10d373, 10d306, 10d305, 10d238, 10d237, 10d170, 10d169, 10d102, 10d101, 10d34, 10d33};
-    
-        
-    rowPixelPanel0 = bl0[address]; // 
-        
+    rowPixelPanel0 = bl0[address0];  
+    rowPixelPanel3 = bl3[address3] + 15d6120; 
+    rowPixelPanel5 = bl5[address5] + 15d10200;  
+    rowPixelPanel8 = bl8[address8] + 15d16320; 
+    rowPixelPanel10 = bl10[address10] + 15d20400; 
+    rowPixelPanel22 = bl22[address22] + 15d68; 
+    rowPixelPanel25 = bl25[address25] + 15d6188; 
+    rowPixelPanel27 = bl27[address27] + 15d10268; 
+    rowPixelPanel30 = bl30[address30] + 15d16388; 
+    rowPixelPanel32 = bl32[address32] + 15d20468;      
   }
 }
+
+
+
+//bl-1
+//0,3,5,8,10,22,25,27,30,32
+//bl-w/ side cutouts
+//2,7,24,29
+//bl-w/ middle cutouts
+//4,9,26,31
+

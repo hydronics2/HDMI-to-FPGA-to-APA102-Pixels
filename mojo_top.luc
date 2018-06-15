@@ -15,8 +15,12 @@
 //06/11/18 - working accept for the bottom row!! memory arbiter to SD-ram. 6:55pm
 //06/13/18 - pretty much saving the first vertical row 11 panels 4000+ LEDs and writing to one panel
 //6/13/18 - saving 33 panels to SDram and tested writing the 1st and last panel successfully. #18 code
-
-
+//6/14/18 - made into_Sdram a seperate module frome writing to panels
+//6/14/18 - 20.1 - two panels printing successfully
+//6/14/18 - 21 - 3 panels programmed, two writing
+//615/18 - 22 added additional pieces of information
+//6/15/18 - 22.2 added a total of 6 panels.. a little glitchy. tried changing the spi clock divder to 5 and it cleaned up the shaking
+//bits of blue showing up on bottom of panel 32.
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -32,33 +36,28 @@ module mojo_top (
     output avr_rx,          // AVR RX (FPGA TX)
     input avr_rx_busy,       // AVR RX buffer full
     
-    
-    
-    
     input hdmi2_tmds [4],   // HDMI In
     input hdmi2_tmdsb [4],
     inout hdmi2_sda,        // EDID Interface
     input hdmi2_scl,
-    
-    
+        
     output apa102_data0,
-    //output apa102_data1,
+    output apa102_data3,
+    output apa102_data5,
+    output apa102_data8,
+    output apa102_data10,
+    output apa102_data32,
+    
     output apa102_sck,
     
     output<Sdram.out> sdramOut,   // SDRAM outputs
     inout<Sdram.inOut> sdramInOut // SDRAM inout
-    
-    
+
   ) {
   
   sig rst;  // reset signal
   
-  //start reading pixels at location 40,30 (x,y) on HDMI screen 1270 x 800
-  const X_START = 40; //
-  const Y_START = 30; //
-  
   panelRows panelRows; //#1
-  //panelOneTrArray panelOneTrArray; //#2
   
   hdmi_to_fifo hdmi_to_fifo(.rst(rst));
   
@@ -81,29 +80,40 @@ module mojo_top (
 
     sdram sdram (.sdramInOut(sdramInOut));
     panel_0 panel_0;
+    panel_3 panel_3;
+    panel_5 panel_5;
+    panel_8 panel_8;
+    panel_10 panel_10;
+    panel_32 panel_32;  
+      
+    into_Sdram into_Sdram;
+      
     spi_master0 spi_out0;
+    spi_master3 spi_out3;
+    spi_master5 spi_out5;
+    spi_master8 spi_out8;
+    spi_master10 spi_out10;
+    
+    spi_master32 spi_out32;
        
     fifo_buffer fifo_buffer;
        
     avr_interface avr(#CLK_FREQ(100000000));
       
-      // memory arbiter to connect multiple devices to SDRAM
-      memory_arbiter mem_arb (#DEVICES(2));
+    // memory arbiter to connect multiple devices to SDRAM
+    memory_arbiter mem_arb (#DEVICES(7));
     
     }
-    // connect up the edid rom using a clock we know will alway be running
     edid_rom edid (.rst(rst), .sda(hdmi2_sda), .scl(hdmi2_scl));
     
     dff gameCounter[26];
     dff blinkFlag[2];
   }
     
-  
   always {
     reset_cond.in = ~rst_n;    // input raw inverted reset signal
     rst = reset_cond.out;      // conditioned reset
- 
-  
+
     // connect inputs of avr
     avr.cclk = cclk;
     avr.spi_ss = spi_ss;
@@ -122,70 +132,138 @@ module mojo_top (
     
     avr.tx_data = panel_0.transmitByte;
     avr.new_tx_data = panel_0.newTxDataFlag;
-    panel_0.txBusy = avr.tx_busy;    
+    panel_0.txBusy = avr.tx_busy;
+    into_Sdram.txBusy = avr.tx_busy;    
     
     fifo_buffer.hdmi_clk = hdmi_to_fifo.hdmiClk;
     fifo_buffer.writeFifo = hdmi_to_fifo.writeFifo;
-    
     fifo_buffer.redIn = hdmi_to_fifo.redOut;
     fifo_buffer.greenIn = hdmi_to_fifo.greenOut;
     fifo_buffer.blueIn = hdmi_to_fifo.blueOut;
-    
-    panel_0.readFifoFlag = fifo_buffer.readFifo;
-    
-    panel_0.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    
-
-    panel_0.red = fifo_buffer.redOut1;
-    panel_0.green = fifo_buffer.greenOut1;
-    panel_0.blue = fifo_buffer.blueOut1;
-    panel_0.writeFifo2 = fifo_buffer.writeFifo2;
-    fifo_buffer.getFifo = panel_0.getFifo;
-    
-        
-    panelRows.address = panel_0.rowPixelAddress;
-    panel_0.rowStartPixel = panelRows.rowPixelPanel0; 
-    
-    panel_0.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
-    
-
+    into_Sdram.readFifoFlag = fifo_buffer.readFifo;
+    into_Sdram.red = fifo_buffer.redOut1;
+    into_Sdram.green = fifo_buffer.greenOut1;
+    into_Sdram.blue = fifo_buffer.blueOut1;
+    into_Sdram.writeFifo2 = fifo_buffer.writeFifo2;
+    fifo_buffer.getFifo = into_Sdram.getFifo;
+    sdramOut = sdram.sdramOut;              // connect controller to SDRAM        
+    into_Sdram.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
     
     // connect HDMI input
     hdmi_to_fifo.tmds = hdmi2_tmds;
     hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
-    
-    
-    spi_out0.data_in = panel_0.ledByteOut;
-    spi_out0.start = panel_0.newSpiData; 
-    panel_0.spiBusySignal = spi_out0.busy;   
-    
-    spi_out0.miso = 1b0;
-    apa102_data0 = spi_out0.mosi;
-    apa102_sck = spi_out0.sck;
-
-        
     // arbiter to memory connections
     mem_arb.memIn = sdram.memOut;
     sdram.memIn = mem_arb.memOut;
     
     // image capture to memory arbiter connection
-    mem_arb.devIn[0] = panel_0.memOut;
-    panel_0.memIn = mem_arb.devOut[0];
-    
-    // register adapter to memory connections
-    panel_0.memIn2 = mem_arb.devOut[1];
-    mem_arb.devIn[1] = panel_0.memOut2;   
- 
-    sdramOut = sdram.sdramOut;              // connect controller to SDRAM     
+    mem_arb.devIn[0] = into_Sdram.memOut;
+    into_Sdram.memIn = mem_arb.devOut[0];
 
     
+    // register adapter to memory connections
+    panel_0.memIn0 = mem_arb.devOut[1];
+    mem_arb.devIn[1] = panel_0.memOut0;   
+     
+    panel_3.memIn3 = mem_arb.devOut[2];
+    mem_arb.devIn[2] = panel_3.memOut3;  
+    
+    panel_5.memIn5 = mem_arb.devOut[3];
+    mem_arb.devIn[3] = panel_5.memOut5; 
+    
+    panel_8.memIn8 = mem_arb.devOut[4];
+    mem_arb.devIn[4] = panel_8.memOut8; 
+    
+    panel_10.memIn10 = mem_arb.devOut[5];
+    mem_arb.devIn[5] = panel_10.memOut10; 
+       
+    panel_32.memIn32 = mem_arb.devOut[6];
+    mem_arb.devIn[6] = panel_32.memOut32;  
+                      
+
+    panel_0.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    panel_3.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    panel_5.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    panel_8.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    panel_10.startWritingFlag = hdmi_to_fifo.startWritingFlag;     
+    
+    panel_32.startWritingFlag = hdmi_to_fifo.startWritingFlag;
+    
+    
+    panelRows.address0 = panel_0.rowPixelAddress;
+    panel_0.rowStartPixel = panelRows.rowPixelPanel0; 
+
+    panelRows.address3 = panel_3.rowPixelAddress;
+    panel_3.rowStartPixel = panelRows.rowPixelPanel3;
+    
+    panelRows.address5 = panel_5.rowPixelAddress;
+    panel_5.rowStartPixel = panelRows.rowPixelPanel5;
+    
+    panelRows.address8 = panel_8.rowPixelAddress;
+    panel_8.rowStartPixel = panelRows.rowPixelPanel8;
+    
+    panelRows.address10 = panel_10.rowPixelAddress;
+    panel_10.rowStartPixel = panelRows.rowPixelPanel10;
+    
+    panelRows.address22 = 0;
+    panelRows.address25 = 0;
+    panelRows.address27 = 0;
+    panelRows.address30 = 0;    
+        
+    panelRows.address32 = panel_32.rowPixelAddress;
+    panel_32.rowStartPixel = panelRows.rowPixelPanel32;     
+    
+    spi_out0.data_in = panel_0.ledByteOut;
+    spi_out0.start = panel_0.newSpiData; 
+    panel_0.spiBusySignal = spi_out0.busy;   
+    
+    spi_out3.data_in = panel_3.ledByteOut3;
+    spi_out3.start = panel_3.newSpiData3; 
+    panel_3.spi3BusySignal = spi_out3.busy; 
+
+    spi_out5.data_in = panel_5.ledByteOut5;
+    spi_out5.start = panel_5.newSpiData5; 
+    panel_5.spi5BusySignal = spi_out5.busy; 
+    
+    spi_out8.data_in = panel_8.ledByteOut8;
+    spi_out8.start = panel_8.newSpiData8; 
+    panel_8.spi8BusySignal = spi_out8.busy;     
+    
+    spi_out10.data_in = panel_10.ledByteOut10;
+    spi_out10.start = panel_10.newSpiData10; 
+    panel_10.spi10BusySignal = spi_out10.busy; 
+    
+    
+    spi_out32.data_in = panel_32.ledByteOut32;
+    spi_out32.start = panel_32.newSpiData32; 
+    panel_32.spi32BusySignal = spi_out32.busy; 
+    
+    spi_out0.miso = 1b0;
+    apa102_data0 = spi_out0.mosi;
+    
+    spi_out3.miso = 1b0;
+    apa102_data3 = spi_out3.mosi;
+    
+    spi_out5.miso = 1b0;
+    apa102_data5 = spi_out5.mosi;
+    
+    spi_out8.miso = 1b0;
+    apa102_data8 = spi_out8.mosi;
+    
+    spi_out10.miso = 1b0;
+    apa102_data10 = spi_out10.mosi;
+    
+    spi_out32.miso = 1b0;
+    apa102_data32 = spi_out32.mosi;      
+    
+    apa102_sck = spi_out0.sck;
+
+
     gameCounter.d = gameCounter.q + 1;
     
     led[0] = gameCounter.q[25];  // this is a heart beat counter ~ 1 per second  
 
-    //led[7:1] = panel_0.ledOut;           //has a default black screen... turns on pixels momentarily if there is red
-        
- 
+    led[7:1] = 0;           //has a default black screen... turns on pixels momentarily if there is red
   }
 }
 
