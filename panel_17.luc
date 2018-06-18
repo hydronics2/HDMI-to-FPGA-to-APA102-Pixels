@@ -1,9 +1,17 @@
 //Section 1.
-//Panel 5.
-//start Pixel is 12138 w/ 10200 offset from bottom-left panel_0
-// bottom left start led
+//Panel 17.
+//start Pixel is 12307 w/ 12240 offset from tr11
+// tr with bottom edges cutout
 
-module panel_5 (
+
+//APA 102 led strips receive data as follows
+//  Start frame 32 bits ZEROS
+// LED FRAME consists of three bits 111.... and 5 bits brightnes value followed by one byte each blue, green, red..
+// end frame is 4 bytes 8hFF.
+
+
+module panel_17 (
+
     input clk,  // clock
     input rst,
 
@@ -11,12 +19,9 @@ module panel_5 (
     output newSpiData,
     output ledByteOut[8],
 
-
     output rowPixelAddress[5],
     input rowStartPixel[15],
-
     input startWritingFlag,
-
 
     output<Memory.master> memOut2,    // memory interface
     input<Memory.slave> memIn2,
@@ -32,7 +37,7 @@ module panel_5 (
 
   .clk(clk) {
     .rst(rst) {
-      fsm state = {IDLE, READ, WRITE, WAIT, WRITE_BUFFER_TO_SDRAM}; // our state machine
+     fsm state = {IDLE, WRITE}; // our state machine
     }
 
     dff ledStartBitCounter[4];
@@ -47,17 +52,21 @@ module panel_5 (
     dff rgbPixels[24];
   }
 
+
   always {
+
     out = 0;
 
     memOut2.valid = 0;                           // not valid
     memOut2.write = 1;                           // always a write
     memOut2.addr = pixelAddress.q;                       // connect address
 
-    newSpiData = 0;
     ledByteOut = 0;
+    newSpiData = 0;
 
     rowPixelAddress = 0;
+
+
 
     if(startWritingFlag == 1)
     {
@@ -67,24 +76,16 @@ module panel_5 (
       xAxis2.d = 0;
     }
 
+
     if(panelControl1.q == 3)
     {
       state.d = state.WRITE;
     }
 
-
     case (state.q) { // our FSM
-      // IDLE: Reset everything and wait for HDMI panel#1 pixels.
       state.IDLE:
         out = 1;
 
-      state.READ:
-        out = 1;
-
-      state.WRITE_BUFFER_TO_SDRAM:
-        out = 1;
-
-        // Write LEDs to strip
       state.WRITE:
         if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
         {
@@ -94,7 +95,8 @@ module panel_5 (
 
           rowPixelAddress = 0;
 
-          pixelAddress.d = 15d12138;
+          //START PIXEL
+          pixelAddress.d = d12307;
 
           rgbCounter.d = 0;
 
@@ -117,10 +119,10 @@ module panel_5 (
             rgbCounter.d = 0;
             if(yAxis.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
             {
-              pixelAddress.d = pixelAddress.q - 1;
+              pixelAddress.d = pixelAddress.q + 1;
             }
             else{
-              pixelAddress.d = pixelAddress.q + 1;
+              pixelAddress.d = pixelAddress.q - 1;
             }
           }
         }
@@ -162,11 +164,29 @@ module panel_5 (
             {
               rgbCounter.d = 0;
               ledStartBitCounter.d = 5; //get the next pixel from SDram
+
+              //------------------------PANEL /
+              if(pixelAddress.q == d14039) //row 17 last pixel counting down
+              {
+                yAxis.d = 18; //only needed for even and odd (count up and count down)
+                pixelAddress.d = d14140; //first pixel in row 18
+                xAxis2.d = 0;
+              }
+              if(pixelAddress.q == d14112)
+              {
+                yAxis.d = 19; //only needed for even and odd (count up and count down)
+                pixelAddress.d = 15d14215; //first pixel in row 19
+                xAxis2.d = 0;
+              }
+              if(pixelAddress.q == d14243)
+              {
+               ledStartBitCounter.d = 8; //end it.
+              }
             }
           }
           if(rgbCounter.q == 5) //get 1st pixel in next row
           {
-            rowPixelAddress = yAxis.q;     //this has to be here..
+            rowPixelAddress = yAxis.q;     //this has to be here.. can't be assigned globally for some reason...
             pixelAddress.d = rowStartPixel;
             rgbCounter.d = 0;
             xAxis2.d = 0;
@@ -176,6 +196,7 @@ module panel_5 (
             {
               ledStartBitCounter.d = ledStartBitCounter.q + 1;
             }
+
           }
         }
 
@@ -188,7 +209,7 @@ module panel_5 (
         if(ledStartBitCounter.q == 13)
         {
           panelControl1.d = 0;
-          state.d = state.IDLE;
+          state.d = state.IDLE;  //not sure why this is required but gliteches out trying to take out states
         }
       }
   }

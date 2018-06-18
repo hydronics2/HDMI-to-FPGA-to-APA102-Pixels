@@ -18,11 +18,7 @@ module into_Sdram (
     output<Memory.master> memOut,    // memory interface
     input<Memory.slave> memIn,
     
-    
-    input txBusy,
-    output newTxDataFlag,
-    output transmitByte[8],
-    
+
     output getFifo,
     
     //output notConnected[8],
@@ -72,9 +68,6 @@ module into_Sdram (
     getFifo = 0;    
    
     out = 0;    
-   
-    transmitByte = 0;
-    newTxDataFlag = 0; 
     
     if(hdmi_vsyncFlag)
     {

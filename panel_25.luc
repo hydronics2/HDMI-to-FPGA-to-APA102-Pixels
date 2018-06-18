@@ -1,9 +1,9 @@
 //Section 1.
-//Panel 5.
-//start Pixel is 12138 w/ 10200 offset from bottom-left panel_0
+//Panel 25.
+//start Pixel is 8126 w/ 6188 offset from bottom-left panel_0
 // bottom left start led
 
-module panel_5 (
+module panel_25 (
     input clk,  // clock
     input rst,
 
@@ -94,7 +94,7 @@ module panel_5 (
 
           rowPixelAddress = 0;
 
-          pixelAddress.d = 15d12138;
+          pixelAddress.d = 15d8126;
 
           rgbCounter.d = 0;
 

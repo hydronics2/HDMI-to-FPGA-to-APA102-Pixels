@@ -1,43 +1,112 @@
 module panelRows (
     input address0[5],  // ROM address
+    input address1[5],  // ROM address
+    input address2[5],  // ROM address
     input address3[5],  // ROM address
-    input address5[5],  // ROM address0
-    input address8[5],  // ROM address0
-    input address10[5],  // ROM address0
-    input address22[5],  // ROM address0
-    input address25[5],  // ROM address0
-    input address27[5],  // ROM address0
+    input address4[5],  // ROM address
+    input address5[5],  // ROM address
+    input address6[5],  // ROM address
+    input address7[5],  // ROM address
+    input address8[5],  // ROM address
+    input address9[5],  // ROM address
+    input address10[5],  // ROM address
+    input address11[5],  // ROM address
+    input address12[5],  // ROM address
+    input address13[5],  // ROM address
+    input address14[5],  // ROM address
+    input address15[5],  // ROM address
+    input address16[5],  // ROM address
+    input address17[5],  // ROM address
+    input address18[5],  // ROM address
+    input address19[5],  // ROM address
+    input address20[5],  // ROM address
+    input address21[5],  // ROM address
+    input address22[5],  // ROM address
+    input address23[5],  // ROM address
+    input address24[5],  // ROM address
+    input address25[5],  // ROM address
+    input address26[5],  // ROM address
+    input address27[5],  // ROM address
+    input address28[5],  // ROM address
+    input address29[5],  // ROM address
     input address30[5],  // ROM address
+    input address31[5],  // ROM address
     input address32[5],  // ROM address
-    
+
     output rowPixelPanel0[15],   // ROM output
+    output rowPixelPanel1[15],   // ROM output
+    output rowPixelPanel2[15],   // ROM output
     output rowPixelPanel3[15],   // ROM output
+    output rowPixelPanel4[15],   // ROM output
     output rowPixelPanel5[15],   // ROM output
+    output rowPixelPanel6[15],   // ROM output
+    output rowPixelPanel7[15],   // ROM output
     output rowPixelPanel8[15],   // ROM output
+    output rowPixelPanel9[15],   // ROM output
     output rowPixelPanel10[15],   // ROM output
+    output rowPixelPanel11[15],   // ROM output
+    output rowPixelPanel12[15],   // ROM output
+    output rowPixelPanel13[15],   // ROM output
+    output rowPixelPanel14[15],   // ROM output
+    output rowPixelPanel15[15],   // ROM output
+    output rowPixelPanel16[15],   // ROM output
+    output rowPixelPanel17[15],   // ROM output
+    output rowPixelPanel18[15],   // ROM output
+    output rowPixelPanel19[15],   // ROM output
+    output rowPixelPanel20[15],   // ROM output
+    output rowPixelPanel21[15],   // ROM output
     output rowPixelPanel22[15],   // ROM output
+    output rowPixelPanel23[15],   // ROM output
+    output rowPixelPanel24[15],   // ROM output
     output rowPixelPanel25[15],   // ROM output
+    output rowPixelPanel26[15],   // ROM output
     output rowPixelPanel27[15],   // ROM output
-    output rowPixelPanel30[15],   // ROM output 
+    output rowPixelPanel28[15],   // ROM output
+    output rowPixelPanel29[15],   // ROM output
+    output rowPixelPanel30[15],   // ROM output
+    output rowPixelPanel31[15],   // ROM output
     output rowPixelPanel32[15]   // ROM output
   ) {
- 
+
   const ARRAY_SIZE = 20;
-   
+
   sig bl0[ARRAY_SIZE][15];
+  sig bl1[ARRAY_SIZE][15];
+  sig bl2[ARRAY_SIZE][15];
   sig bl3[ARRAY_SIZE][15];
+  sig bl4[ARRAY_SIZE][15];
   sig bl5[ARRAY_SIZE][15];
+  sig bl6[ARRAY_SIZE][15];
+  sig bl7[ARRAY_SIZE][15];
   sig bl8[ARRAY_SIZE][15];
+  sig bl9[ARRAY_SIZE][15];
   sig bl10[ARRAY_SIZE][15];
+  sig bl11[ARRAY_SIZE][15];
+  sig bl12[ARRAY_SIZE][15];
+  sig bl13[ARRAY_SIZE][15];
+  sig bl14[ARRAY_SIZE][15];
+  sig bl15[ARRAY_SIZE][15];
+  sig bl16[ARRAY_SIZE][15];
+  sig bl17[ARRAY_SIZE][15];
+  sig bl18[ARRAY_SIZE][15];
+  sig bl19[ARRAY_SIZE][15];
+  sig bl20[ARRAY_SIZE][15];
+  sig bl21[ARRAY_SIZE][15];
   sig bl22[ARRAY_SIZE][15];
+  sig bl23[ARRAY_SIZE][15];
+  sig bl24[ARRAY_SIZE][15];
   sig bl25[ARRAY_SIZE][15];
+  sig bl26[ARRAY_SIZE][15];
   sig bl27[ARRAY_SIZE][15];
+  sig bl28[ARRAY_SIZE][15];
+  sig bl29[ARRAY_SIZE][15];
   sig bl30[ARRAY_SIZE][15];
+  sig bl31[ARRAY_SIZE][15];
   sig bl32[ARRAY_SIZE][15];
- 
+
   always {
-    //#1 BL  
-   
+    //#1 BL
+
     //bottom left with no cutouts
     bl0 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
     bl3 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
@@ -49,29 +118,121 @@ module panelRows (
     bl27 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
     bl30 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
     bl32 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+
+    rowPixelPanel0 = bl0[address0];  //for panel #0
+    rowPixelPanel3 = bl3[address3] + 6120;  //for panel #3
+    rowPixelPanel5 = bl5[address5] + 10200;  //for panel #5
+    rowPixelPanel8 = bl22[address8] + 16320;  //for panel #8
+    rowPixelPanel10 = bl10[address10] + 20400;  //for panel #10
+    rowPixelPanel22 = bl22[address22] + 68;  //for panel #22
+    rowPixelPanel25 = bl25[address25] + 6188;  //for panel #25
+    rowPixelPanel27 = bl27[address27] + 10268;  //for panel #27
+    rowPixelPanel30 = bl30[address30] + 16388;  //for panel #30
+
+     //BL w/edges cut out at top.. third to the last pixel -3 from 237 to 234
+    bl2 = {15d33,15d102,15d234,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl7 = {15d33,15d102,15d234,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl24 = {15d33,15d102,15d234,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl29 = {15d33,15d102,15d234,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1122,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    rowPixelPanel2 = bl2[address2] + 4080;  //for panel #2
+    rowPixelPanel7 = bl7[address7] + 14280;  //for panel #7
+    rowPixelPanel24 = bl24[address24] + 4148;  //for panel #24
+    rowPixelPanel29 = bl29[address29] + 14348;  //for panel #29
+
+
+
+
+    //BL w/middle cut outs. Added 3 to 8th position 1122 => 1125
+    bl4 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1125,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl9 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1125,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl26 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1125,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    bl31 = {15d33,15d102,15d237,15d306,15d441,15d510,15d645,15d714,15d849,15d918,15d1053,15d1125,15d1257,15d1326,15d1461,15d1530,15d1665,15d1734,15d1869,15d1938};
+    rowPixelPanel4 = bl4[address4] + 8160;  //for panel #4
+    rowPixelPanel9 = bl9[address9] + 18360;  //for panel #9
+    rowPixelPanel26 = bl26[address26] + 8228;  //for panel #26
+    rowPixelPanel31 = bl31[address31] + 18428;  //for panel #31
+
+    //Section 1 Bottom Left
+    rowPixelPanel3 = bl3[address3] + 15d6120;
+    rowPixelPanel5 = bl5[address5] + 15d10200;
+    rowPixelPanel8 = bl8[address8] + 15d16320;
+    rowPixelPanel10 = bl10[address10] + 15d20400;
+    rowPixelPanel22 = bl22[address22] + 15d68;
+    rowPixelPanel25 = bl25[address25] + 15d6188;
+    rowPixelPanel27 = bl27[address27] + 15d10268;
+    rowPixelPanel30 = bl30[address30] + 15d16388;
+    rowPixelPanel32 = bl32[address32] + 15d20468;
+
+
+
+    //Top Right TR with no cutouts
+    bl11 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl14 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl16 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl19 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl21 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    rowPixelPanel11 = bl11[address11];  //for panel #11
+    rowPixelPanel14 = bl14[address14] + 15d6120;  //for panel #14
+    rowPixelPanel16 = bl16[address16] + 15d16320;  //for panel # 16
+    rowPixelPanel19 = bl19[address19] + 15d16320;  //for panel # 19
+    rowPixelPanel21 = bl21[address21] + 15d20400;  //for panel # 21
     
-    //bl3
-    //bl32 = {15d20501,15d20570,15d20705,15d20774,15d20909,15d20978,15d21113,15d21182,15d21317,15d21386,15d21521,15d21590,15d21725,15d21794,15d21929,15d21998,15d22133,15d22202,15d22337,15d22406};
+
+    //Top Right TR with bottom edges cutout  third to the last pixel +3 from 1768 to 1771
+    bl12 = {15d1972,15d1903,15d1771,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl17 = {15d1972,15d1903,15d1771,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d883,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    rowPixelPanel12 = bl12[address12] + 15d2040; //panel 12
+    rowPixelPanel17 = bl17[address17] + 15d12240; //panel 17
+
+
+    //Top Right w/middle cut outs. subtracted 3 to 8th position 883 to 880
+    bl15 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d880,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    bl20 = {15d1972,15d1903,15d1768,15d1699,15d1564,15d1495,15d1360,15d1291,15d1156,15d1087,15d952,15d880,15d748,15d679,15d544,15d475,15d340,15d271,15d136,15d67};
+    rowPixelPanel15 = bl15[address15] + 15d8160;  //for panel #15
+    rowPixelPanel20 = bl20[address20] + 15d18360;  //for panel #20
     
-    rowPixelPanel0 = bl0[address0];  
-    rowPixelPanel3 = bl3[address3] + 15d6120; 
-    rowPixelPanel5 = bl5[address5] + 15d10200;  
-    rowPixelPanel8 = bl8[address8] + 15d16320; 
-    rowPixelPanel10 = bl10[address10] + 15d20400; 
-    rowPixelPanel22 = bl22[address22] + 15d68; 
-    rowPixelPanel25 = bl25[address25] + 15d6188; 
-    rowPixelPanel27 = bl27[address27] + 15d10268; 
-    rowPixelPanel30 = bl30[address30] + 15d16388; 
-    rowPixelPanel32 = bl32[address32] + 15d20468;      
-  }
+
+    //Top Left w/bottom edges cutout... took 3 off of 3rd to last row 3807 to 3804
+    bl1 = {15d4011,15d3867,15d3804,15d3672,15d3603,15d3468,15d3399,15d3264,15d3195,15d3060,15d2991,15d2856,15d2787,15d2652,15d2583,15d2448,15d2379,15d2244,15d2175,15d2040};
+    bl6 = {15d4011,15d3867,15d3804,15d3672,15d3603,15d3468,15d3399,15d3264,15d3195,15d3060,15d2991,15d2856,15d2787,15d2652,15d2583,15d2448,15d2379,15d2244,15d2175,15d2040};
+    bl23 = {15d4011,15d3867,15d3804,15d3672,15d3603,15d3468,15d3399,15d3264,15d3195,15d3060,15d2991,15d2856,15d2787,15d2652,15d2583,15d2448,15d2379,15d2244,15d2175,15d2040};
+    bl28 = {15d4011,15d3867,15d3804,15d3672,15d3603,15d3468,15d3399,15d3264,15d3195,15d3060,15d2991,15d2856,15d2787,15d2652,15d2583,15d2448,15d2379,15d2244,15d2175,15d2040};
+    rowPixelPanel1 = bl1[address1];  //for panel  1
+    rowPixelPanel6 = bl6[address6] + 10200;  //for panel   6
+    rowPixelPanel23 = bl23[address23] + 68;  //for panel  23
+    rowPixelPanel28 = bl28[address28] + 10268;  //for panel  28
+
+
+    //bottom right with top sides cutout
+    bl13 = {15d4117,15d4246,15d4321,15d4453,15d4522,15d4657,15d4726,15d4861,15d4930,15d5065,15d5134,15d5269,15d5338,15d5473,15d5542,15d5677,15d5746,15d5881,15d5950,15d6085};
+    bl18 = {15d4117,15d4246,15d4321,15d4453,15d4522,15d4657,15d4726,15d4861,15d4930,15d5065,15d5134,15d5269,15d5338,15d5473,15d5542,15d5677,15d5746,15d5881,15d5950,15d6085};
+    rowPixelPanel13 = bl13[address13];  //for panel  13
+    rowPixelPanel18 = bl18[address18] + 15d10200;  //for panel  18
+
+
+
+    }
 }
 
 
 
 //bl-1
 //0,3,5,8,10,22,25,27,30,32
-//bl-w/ side cutouts
+//bl-w/ edges cutouts
 //2,7,24,29
 //bl-w/ middle cutouts
 //4,9,26,31
 
+//top right -tr.
+//... 11,14,16,19,21
+//top right with bottom edges cutout
+//...12,17
+//to right with middle cutouts
+//..15,20
+
+
+//top left with bottom edges cutout
+//...1,6,23,28
+
+//bottom right with top edges cutout
+//...13,18

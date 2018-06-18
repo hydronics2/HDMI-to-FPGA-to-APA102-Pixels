@@ -1,72 +1,77 @@
+//Section 1.
+//Panel 10.
+//start Pixel is 22338 w/ 20400 offset from bottom-left panel_0
+// bottom left start led
+
 module panel_10 (
     input clk,  // clock
     input rst,
 
-    input spi10BusySignal,
-    output newSpiData10,
-    output ledByteOut10[8],
-    
-        
+    input spiBusySignal,
+    output newSpiData,
+    output ledByteOut[8],
+
+
     output rowPixelAddress[5],
-    input rowStartPixel[15], 
-    
+    input rowStartPixel[15],
+
     input startWritingFlag,
-    
-    
-    output<Memory.master> memOut10,    // memory interface
-    input<Memory.slave> memIn10,
-    
-  
+
+
+    output<Memory.master> memOut2,    // memory interface
+    input<Memory.slave> memIn2,
+
+
     output out
-    
+
   ) {
-  
+
   const X_LENGTH = 34; //34 pixels wide
   const Y_LENGTH = 21; //20 pixels deep
-  
-  
+
+
   .clk(clk) {
     .rst(rst) {
-      fsm state = {IDLE, READ, WRITE, WAIT, WRITE_BUFFER_TO_SDRAM}; // our state machine      
+      fsm state = {IDLE, READ, WRITE, WAIT, WRITE_BUFFER_TO_SDRAM}; // our state machine
     }
-    
+
     dff ledStartBitCounter[4];
     dff rgbCounter[4];
     dff xAxis2[6]; //panel width for counting write cycles
-    dff yAxis[5];  //panel size 34 x 20 pixels 
-    
-    dff pixelAddress[15]; // need 15 bits for 33 panels x 680 => 22,440 pixels per mojo   
-    
-    dff panelControl1[2];    
- 
-    dff rgbPixels[24];   
-  }  
+    dff yAxis[5];  //panel size 34 x 20 pixels
 
-  always {  
-    out = 0;    
-    
-    memOut10.valid = 0;                           // not valid
-    memOut10.write = 1;                           // always a write
-    memOut10.addr = pixelAddress.q;                       // connect address   
-    
-    newSpiData10 = 0;
-    ledByteOut10 = 0;
-    
-    rowPixelAddress = 0;      
-   
+    dff pixelAddress[15]; // need 15 bits for 33 panels x 680 => 22,440 pixels per mojo
+
+    dff panelControl1[2];
+
+    dff rgbPixels[24];
+  }
+
+  always {
+    out = 0;
+
+    memOut2.valid = 0;                           // not valid
+    memOut2.write = 1;                           // always a write
+    memOut2.addr = pixelAddress.q;                       // connect address
+
+    newSpiData = 0;
+    ledByteOut = 0;
+
+    rowPixelAddress = 0;
+
     if(startWritingFlag == 1)
-    { 
+    {
       panelControl1.d = 3;
       ledStartBitCounter.d = 0;
       yAxis.d = 0;
       xAxis2.d = 0;
-    }    
+    }
 
-    if(panelControl1.q == 3) 
+    if(panelControl1.q == 3)
     {
-      state.d = state.WRITE; 
-    }   
-    
+      state.d = state.WRITE;
+    }
+
 
     case (state.q) { // our FSM
       // IDLE: Reset everything and wait for HDMI panel#1 pixels.
@@ -75,39 +80,39 @@ module panel_10 (
 
       state.READ:
         out = 1;
-      
+
       state.WRITE_BUFFER_TO_SDRAM:
         out = 1;
-        
+
         // Write LEDs to strip
       state.WRITE:
-        if(ledStartBitCounter.q < 5 && !spi10BusySignal)  //send atleast 32 0s first
-        {  
-          ledByteOut10 = 8b0;
-          newSpiData10 = 1;
+        if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
+        {
+          ledByteOut = 8b0;
+          newSpiData = 1;
           ledStartBitCounter.d = ledStartBitCounter.q + 1;
- 
-          rowPixelAddress = 0;     
-          
-          pixelAddress.d = 15d22338; //panel  
-             
+
+          rowPixelAddress = 0;
+
+          pixelAddress.d = 15d2006;
+
           rgbCounter.d = 0;
-          
+
         }
-        if(ledStartBitCounter.q == 5) //1st led frame    
-        { 
-          if(!memIn10.busy){
-            memOut10.valid = 1;            // command is valid
-            memOut10.write = 0;            // perform a read
-            memOut10.addr = pixelAddress.q;
-            ledStartBitCounter.d = 6; 
+        if(ledStartBitCounter.q == 5) //1st led frame
+        {
+          if(!memIn2.busy){
+            memOut2.valid = 1;            // command is valid
+            memOut2.write = 0;            // perform a read
+            memOut2.addr = pixelAddress.q;
+            ledStartBitCounter.d = 6;
           }
         }
-        if(ledStartBitCounter.q == 6) //1st led frame    
-        {         
-          if(memIn10.valid) //need to wait for the memory to be valid
+        if(ledStartBitCounter.q == 6) //1st led frame
+        {
+          if(memIn2.valid) //need to wait for the memory to be valid
           {
-            rgbPixels.d = memIn10.data[23:0];
+            rgbPixels.d = memIn2.data[23:0];
             ledStartBitCounter.d = 7;
             rgbCounter.d = 0;
             if(yAxis.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
@@ -122,33 +127,33 @@ module panel_10 (
 
         if(ledStartBitCounter.q == 7)
         {
-          if(rgbCounter.q == 0 && !spi10BusySignal)
+          if(rgbCounter.q == 0 && !spiBusySignal)
           {
             xAxis2.d = xAxis2.q + 1;
-            ledByteOut10 = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
-            newSpiData10 = 1;               
+            ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
+            newSpiData = 1;
             rgbCounter.d = 1;
           }
-          if(rgbCounter.q == 1 && !spi10BusySignal)
-          { 
-            ledByteOut10 = rgbPixels.q[23:16];
-            newSpiData10 = 1;
+          if(rgbCounter.q == 1 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[23:16];
+            newSpiData = 1;
             rgbCounter.d = 2;
-          }          
-          if(rgbCounter.q == 2 && !spi10BusySignal)
-          { 
-            ledByteOut10 = rgbPixels.q[15:8];
-            newSpiData10 = 1;
+          }
+          if(rgbCounter.q == 2 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[15:8];
+            newSpiData = 1;
             rgbCounter.d = 3;
-          }  
-          if(rgbCounter.q == 3 && !spi10BusySignal)
-          { 
-            ledByteOut10 = rgbPixels.q[7:0];
-            newSpiData10 = 1;
+          }
+          if(rgbCounter.q == 3 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[7:0];
+            newSpiData = 1;
             rgbCounter.d = 4;
           }
           if(rgbCounter.q == 4) //wrote RG&B
-          { 
+          {
             if(xAxis2.q == X_LENGTH) //34 ... last pixel in row
             {
               rgbCounter.d = 5; //get 1st pixel in next row
@@ -158,33 +163,33 @@ module panel_10 (
               rgbCounter.d = 0;
               ledStartBitCounter.d = 5; //get the next pixel from SDram
             }
-          } 
+          }
           if(rgbCounter.q == 5) //get 1st pixel in next row
-          {     
-            rowPixelAddress = yAxis.q;     //this has to be here.. 
-            pixelAddress.d = rowStartPixel; 
+          {
+            rowPixelAddress = yAxis.q;     //this has to be here..
+            pixelAddress.d = rowStartPixel;
             rgbCounter.d = 0;
             xAxis2.d = 0;
             ledStartBitCounter.d = 5;  //get the next pixel from SDram
-  
+
             if(yAxis.q == Y_LENGTH) //end if wrote 0-19 rows
             {
-              ledStartBitCounter.d = ledStartBitCounter.q + 1; 
+              ledStartBitCounter.d = ledStartBitCounter.q + 1;
             }
           }
         }
-        
-        if(ledStartBitCounter.q > 7 && ledStartBitCounter.q < 13 && !spi10BusySignal) //end frame 4+ bytes of 8hFF
-        {  
-          ledByteOut10 = 8hff;
-          newSpiData10 = 1;
+
+        if(ledStartBitCounter.q > 7 && ledStartBitCounter.q < 13 && !spiBusySignal) //end frame 4+ bytes of 8hFF
+        {
+          ledByteOut = 8hff;
+          newSpiData = 1;
           ledStartBitCounter.d = ledStartBitCounter.q + 1;
-        } 
+        }
         if(ledStartBitCounter.q == 13)
         {
           panelControl1.d = 0;
           state.d = state.IDLE;
         }
-      } 
+      }
   }
 }

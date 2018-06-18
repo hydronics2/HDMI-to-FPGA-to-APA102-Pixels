@@ -1,4 +1,4 @@
-module spi_master10 #(
+module spi_master27 #(
     //CLK_DIV = 8 : CLK_DIV > 1, // Clock divider
     CLK_DIV = 4, //------------------------------  //8 is 2^8 => 256 or 50,000,000/256 is too slow
                   // 4 is 2^4 is 50,000,000/16 or around 3Mhz
