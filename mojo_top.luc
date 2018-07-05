@@ -1,95 +1,66 @@
-// sets display area of the HDMI screen to project to the APA102 led grid...
+// sets display area of the HDMI screen to project to the APA102 led grid...   
 // x from 40 to 448
 // y from 30 to 250
 
 //dragging the mouse over the above acstive screen area the 2nd LED (led[1]) to turn ON
 
 
-//05/17/18 - fixed verical line counting... starts at 30 lines down now...
-//05/19/18 - two panels writing next to each... only missing top line
-//05/20/18 - first panel is good exept the first 2 leds.. 2nd panel still missing top row..
-//05/21/18 - working on two led panels, sampling 21 rows, printing 20 rows
-//06/05/18 - fifo working on one panel
-//06/10/18 - double fifo into ram.. started writing into SDram.
-//06/11/18 - memory arbitrary seems to be working... does not write to the end of the panel and arrows show up fuzzy... guessing this is a writing to address issue.
-//06/11/18 - working accept for the bottom row!! memory arbiter to SD-ram. 6:55pm
-//06/13/18 - pretty much saving the first vertical row 11 panels 4000+ LEDs and writing to one panel
-//6/13/18 - saving 33 panels to SDram and tested writing the 1st and last panel successfully. #18 code
-//6/14/18 - made into_Sdram a seperate module frome writing to panels
-//6/14/18 - 20.1 - two panels printing successfully
-//6/14/18 - 21 - 3 panels programmed, two writing
-//615/18 - 22 added additional pieces of information
-//6/15/18 - 22.2 added a total of 6 panels.. a little glitchy. tried changing the spi clock divder to 5 and it cleaned up the shaking
-//bits of blue showing up on bottom of panel 32.
+//6/16/18 - made minimal for testing
+//7/1/18 - took 21.minimal2 post toor camp and modified it with 1 fifo to ram for one panel writing
+//7/1/18 - hdmi_in0 changed to 24 bit ram for panel_0.
+//7/1/18 - hdmi-in0 changed fifo to 24bit got rid of some jitters
+///.... writing 3 panels 2040 pixels to ram...
+//7/1/18 = hdmi_in2 - writing to one panel
+//7/1/18 - hdmi_in3 -writing one panel perfectly :)
+//7/1/18 - hdmi_in5 - chasing the beam on one panel.. writing
+//7/3/18 - hdmi_in6 - 3 panels writing.. a tiny glitcy, panel 2 is backward, and 2 and 3 have pixels missing.. good enough to test the wall theory
+//7/4/18 - hdmi_in8 - after trying all 33 panels.. reverted back to 3 panels to clean up the code a bit.
+//          ... taking out the extra flip-flop that was trying to substantiate v-sync. got rid of some flickering. panel 2 still writing backward 
+//          ... all 3 panels missing pixels
+//... I broke 8... too many changes.. found the big flaw.. wrapped it into 9.
+//7/4/18 - hdmi_in9 - wrapped a few changes into hdmi_in9. Still a tiny bit flickery.
+//7/4/18 - hdmi_in9 - three panels writing all rows... a tiny flickery. going to 10.
+//7/4/18 - hdmi_in11 - changed to clock to 90mhz and spi divider at 3... for 11.25mhz (spi) seemed to reduce flickering
+//7/4/18 - hdmi_in11 - running clock speed at 150mhz and divder at 3 for 9.34mhz(spi) seemed to eliminate ficker for 3 panels..
+
+//7/4/18 - hdmi_in12 - working BL, TR, BL
 
 module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
-    output led [8],         // 8 user controllable LEDs
-    input cclk,             // configuration clock, AVR ready when high
-    //output spi_miso,        // AVR SPI MISO
+    //output led [8],         // 8 user controllable LEDs
+    //input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
     //input spi_ss,           // AVR SPI Slave Select
     //input spi_mosi,         // AVR SPI MOSI
     //input spi_sck,          // AVR SPI Clock
-    //output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-    //input avr_tx,           // AVR TX (FPGA RX)
-    //output avr_rx,          // AVR RX (FPGA TX)
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+   //input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
     //input avr_rx_busy,       // AVR RX buffer full
-
+    
     input hdmi2_tmds [4],   // HDMI In
     input hdmi2_tmdsb [4],
     inout hdmi2_sda,        // EDID Interface
     input hdmi2_scl,
-
+        
     output apa102_data0,
     output apa102_data1,
     output apa102_data2,
-    output apa102_data3,
-    output apa102_data4,
-    output apa102_data5,
-    output apa102_data6,
-    output apa102_data7,
-    output apa102_data8,
-    output apa102_data9,
-    output apa102_data10,
-    output apa102_data11,
-    output apa102_data12,
-    output apa102_data13,
-    output apa102_data14,
-    output apa102_data15,
-    output apa102_data16,
-    output apa102_data17,
-    output apa102_data18,
-    output apa102_data19,
-    output apa102_data20,
-    output apa102_data21,
-    output apa102_data22,
-    output apa102_data23,
-    output apa102_data24,
-    output apa102_data25,
-    output apa102_data26,
-    output apa102_data27,
-    output apa102_data28,
-    output apa102_data29,
-    output apa102_data30,
-    output apa102_data31,
-    output apa102_data32,
-
-    output apa102_sck,
-
-    output<Sdram.out> sdramOut,   // SDRAM outputs
-    inout<Sdram.inOut> sdramInOut // SDRAM inout
+    
+    output apa102_sck
+    
 
   ) {
-
+  
   sig rst;  // reset signal
-
+  
   panelRows panelRows; //#1
-
+  
   hdmi_to_fifo hdmi_to_fifo(.rst(rst));
-
+  
   sig fclk; // 100MHz clock
-
+ 
   // boost clock to 100MHz
   clk_wiz_v3_6 clk_wiz;
   always {
@@ -98,563 +69,132 @@ module mojo_top (
   }
 
   .clk(fclk) {
-
+  
         // The reset conditioner is used to synchronize the reset signal to the FPGA
     // clock. This ensures the entire FPGA comes out of reset at the same time.
     reset_conditioner reset_cond;
-
+    
     .rst(rst){
-
-    sdram sdram (.sdramInOut(sdramInOut));
 
     panel_0 panel_0;
     panel_1 panel_1;
-    panel_2 panel_2;
-    panel_3 panel_3;
-    panel_4 panel_4;
-    panel_5 panel_5;
-    panel_6 panel_6;
-    panel_7 panel_7;
-    panel_8 panel_8;
-    panel_9 panel_9;
-    panel_10 panel_10;
-    panel_11 panel_11;
-    panel_12 panel_12;
-    panel_13 panel_13;
-    panel_14 panel_14;
-    panel_15 panel_15;
-    panel_16 panel_16;
-    panel_17 panel_17;
-    panel_18 panel_18;
-    panel_19 panel_19;
-    panel_20 panel_20;
-    panel_21 panel_21;
-    panel_22 panel_22;
-    panel_23 panel_23;
-    panel_24 panel_24;
-    panel_25 panel_25;
-    panel_26 panel_26;
-    panel_27 panel_27;
-    panel_28 panel_28;
-    panel_29 panel_29;
-    panel_30 panel_30;
-    panel_31 panel_31;
-    panel_32 panel_32;
-
-    into_Sdram into_Sdram;
-
+    panel_2 panel_2;  
+      
+      
     spi_master0 spi_out0;
     spi_master1 spi_out1;
     spi_master2 spi_out2;
-    spi_master3 spi_out3;
-    spi_master4 spi_out4;
-    spi_master5 spi_out5;
-    spi_master6 spi_out6;
-    spi_master7 spi_out7;
-    spi_master8 spi_out8;
-    spi_master9 spi_out9;
-    spi_master10 spi_out10;
-    spi_master11 spi_out11;
-    spi_master12 spi_out12;
-    spi_master13 spi_out13;
-    spi_master14 spi_out14;
-    spi_master15 spi_out15;
-    spi_master16 spi_out16;
-    spi_master17 spi_out17;
-    spi_master18 spi_out18;
-    spi_master19 spi_out19;
-    spi_master20 spi_out20;
-    spi_master21 spi_out21;
-    spi_master22 spi_out22;
-    spi_master23 spi_out23;
-    spi_master24 spi_out24;
-    spi_master25 spi_out25;
-    spi_master26 spi_out26;
-    spi_master27 spi_out27;
-    spi_master28 spi_out28;
-    spi_master29 spi_out29;
-    spi_master30 spi_out30;
-    spi_master31 spi_out31;
-    spi_master32 spi_out32;
-
-
+       
     fifo_buffer fifo_buffer;
-
+       
     //avr_interface avr(#CLK_FREQ(100000000));
-
-    // memory arbiter to connect multiple devices to SDRAM
-    memory_arbiter mem_arb (#DEVICES(34));
-
+      
+    
     }
     edid_rom edid (.rst(rst), .sda(hdmi2_sda), .scl(hdmi2_scl));
-
-    dff gameCounter[26];
-    dff blinkFlag[2];
   }
-
+    
   always {
-    reset_cond.in = ~rst_n;    // input raw inverted reset signal
-    rst = reset_cond.out;      // conditioned reset
 
     // connect inputs of avr
-   // avr.cclk = cclk;
+    
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+ 
+
+    spi_miso = bz;          // not using SPI
+    spi_channel = bzzzz;    // not using flags
+    avr_rx = bz;            // not using serial port
+    
+    //avr.cclk = cclk;
     //avr.spi_ss = spi_ss;
-   // avr.spi_mosi = spi_mosi;
+    //avr.spi_mosi = spi_mosi;
     //avr.spi_sck = spi_sck;
     //avr.rx = avr_tx;
     //avr.channel = hf; // ADC is unused so disable
     //avr.tx_block = avr_rx_busy; // block TX when AVR is busy
-
+ 
     // connect outputs of avr
     //spi_miso = avr.spi_miso;
     //spi_channel = avr.spi_channel;
     //avr_rx = avr.tx;
     //avr.new_tx_data = 0;
     //avr.tx_data = 0;
-
-    //avr.tx_data = 0;
-    //avr.new_tx_data = 0;
-    //into_Sdram.txBusy = avr.tx_busy;
-
+    
+    //avr.tx_data = fifo_buffer.transmitByte;
+    //avr.new_tx_data = fifo_buffer.newTxDataFlag;
+    //panel_0.txBusy = avr.tx_busy;
+   
+    
     fifo_buffer.hdmi_clk = hdmi_to_fifo.hdmiClk;
     fifo_buffer.writeFifo = hdmi_to_fifo.writeFifo;
+    
+    fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
+    fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
+    fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
+    
     fifo_buffer.redIn = hdmi_to_fifo.redOut;
     fifo_buffer.greenIn = hdmi_to_fifo.greenOut;
     fifo_buffer.blueIn = hdmi_to_fifo.blueOut;
-    into_Sdram.readFifoFlag = fifo_buffer.readFifo;
-    into_Sdram.red = fifo_buffer.redOut1;
-    into_Sdram.green = fifo_buffer.greenOut1;
-    into_Sdram.blue = fifo_buffer.blueOut1;
-    into_Sdram.writeFifo2 = fifo_buffer.writeFifo2;
-    fifo_buffer.getFifo = into_Sdram.getFifo;
-    sdramOut = sdram.sdramOut;              // connect controller to SDRAM
-    into_Sdram.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
+    
 
+        
+    panel_0.rgbIn = fifo_buffer.rgbOut0;
+    panel_1.rgbIn = fifo_buffer.rgbOut1;
+    panel_2.rgbIn = fifo_buffer.rgbOut2;
+    
+
+   
+    fifo_buffer.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
+    
+    fifo_buffer.notWriting = panel_0.idle;
+    
+    panelRows.address0 = fifo_buffer.rowPixelAddress;
+    panelRows.address1 = fifo_buffer.rowPixelAddress;
+    panelRows.address2 = fifo_buffer.rowPixelAddress;
+    
+    fifo_buffer.rowStartPixel0 = panelRows.rowPixelPanel0;
+    fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
+    fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
+    
     // connect HDMI input
     hdmi_to_fifo.tmds = hdmi2_tmds;
     hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
-    // arbiter to memory connections
-    mem_arb.memIn = sdram.memOut;
-    sdram.memIn = mem_arb.memOut;
-
-    // image capture to memory arbiter connection
-    mem_arb.devIn[0] = into_Sdram.memOut;
-    into_Sdram.memIn = mem_arb.devOut[0];
-
-
-    // register adapter to memory connections
-    panel_0.memIn2 = mem_arb.devOut[1];
-    mem_arb.devIn[1] = panel_0.memOut2;
-
-    panel_1.memIn2 = mem_arb.devOut[2];
-    mem_arb.devIn[2] = panel_1.memOut2;
-
-    panel_2.memIn2 = mem_arb.devOut[13];
-    mem_arb.devIn[13] = panel_2.memOut2;
-
-    panel_3.memIn2 = mem_arb.devOut[4];
-    mem_arb.devIn[4] = panel_3.memOut2;
-
-    panel_4.memIn2 = mem_arb.devOut[2];
-    mem_arb.devIn[5] = panel_4.memOut2;
-
-    panel_5.memIn2 = mem_arb.devOut[6];
-    mem_arb.devIn[6] = panel_5.memOut2;
-
-    panel_6.memIn2 = mem_arb.devOut[7];
-    mem_arb.devIn[7] = panel_6.memOut2;
-
-    panel_7.memIn2 = mem_arb.devOut[8];
-    mem_arb.devIn[8] = panel_7.memOut2;
-
-    panel_8.memIn2 = mem_arb.devOut[9];
-    mem_arb.devIn[9] = panel_8.memOut2;
-
-    panel_9.memIn2 = mem_arb.devOut[10];
-    mem_arb.devIn[10] = panel_9.memOut2;
-
-    panel_10.memIn2 = mem_arb.devOut[11];
-    mem_arb.devIn[11] = panel_10.memOut2;
-
-    panel_11.memIn2 = mem_arb.devOut[12];
-    mem_arb.devIn[12] = panel_11.memOut2;
-
-    panel_12.memIn2 = mem_arb.devOut[13];
-    mem_arb.devIn[13] = panel_12.memOut2;
-
-    panel_13.memIn2 = mem_arb.devOut[14];
-    mem_arb.devIn[14] = panel_13.memOut2;
-
-    panel_14.memIn2 = mem_arb.devOut[15];
-    mem_arb.devIn[15] = panel_14.memOut2;
-
-    panel_15.memIn2 = mem_arb.devOut[16];
-    mem_arb.devIn[16] = panel_15.memOut2;
-
-    panel_16.memIn2 = mem_arb.devOut[17];
-    mem_arb.devIn[17] = panel_16.memOut2;
-
-    panel_17.memIn2 = mem_arb.devOut[18];
-    mem_arb.devIn[18] = panel_17.memOut2;
-
-    panel_18.memIn2 = mem_arb.devOut[19];
-    mem_arb.devIn[19] = panel_18.memOut2;
-
-    panel_19.memIn2 = mem_arb.devOut[20];
-    mem_arb.devIn[20] = panel_19.memOut2;
-
-    panel_20.memIn2 = mem_arb.devOut[21];
-    mem_arb.devIn[21] = panel_20.memOut2;
-
-    panel_21.memIn2 = mem_arb.devOut[22];
-    mem_arb.devIn[22] = panel_21.memOut2;
-
-    panel_22.memIn2 = mem_arb.devOut[23];
-    mem_arb.devIn[23] = panel_22.memOut2;
-
-    panel_23.memIn2 = mem_arb.devOut[24];
-    mem_arb.devIn[24] = panel_23.memOut2;
-
-    panel_24.memIn2 = mem_arb.devOut[25];
-    mem_arb.devIn[25] = panel_24.memOut2;
-
-    panel_25.memIn2 = mem_arb.devOut[26];
-    mem_arb.devIn[26] = panel_25.memOut2;
-
-    panel_26.memIn2 = mem_arb.devOut[27];
-    mem_arb.devIn[27] = panel_26.memOut2;
-
-    panel_27.memIn2 = mem_arb.devOut[28];
-    mem_arb.devIn[28] = panel_27.memOut2;
-
-    panel_28.memIn2 = mem_arb.devOut[29];
-    mem_arb.devIn[29] = panel_28.memOut2;
-
-    panel_29.memIn2 = mem_arb.devOut[30];
-    mem_arb.devIn[30] = panel_29.memOut2;
-
-    panel_30.memIn2 = mem_arb.devOut[31];
-    mem_arb.devIn[31] = panel_30.memOut2;
-
-    panel_31.memIn2 = mem_arb.devOut[32];
-    mem_arb.devIn[32] = panel_31.memOut2;
-
-    panel_32.memIn2 = mem_arb.devOut[33];
-    mem_arb.devIn[33] = panel_32.memOut2;
-
-
-
-    panel_0.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_1.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_2.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_3.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_4.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_5.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_6.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_7.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_8.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_9.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_10.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_11.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_12.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_13.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_14.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_15.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_16.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_17.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_18.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_19.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_20.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_21.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_22.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_23.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_24.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_25.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_26.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_27.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_28.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_29.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_30.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_31.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_32.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-    panel_32.startWritingFlag = hdmi_to_fifo.startWritingFlag;
-
-
-    panelRows.address0 = panel_0.rowPixelAddress;
-    panel_0.rowStartPixel = panelRows.rowPixelPanel0;
-    panelRows.address1 = panel_1.rowPixelAddress;
-    panel_1.rowStartPixel = panelRows.rowPixelPanel1;
-    panelRows.address2 = panel_2.rowPixelAddress;
-    panel_2.rowStartPixel = panelRows.rowPixelPanel2;
-    panelRows.address3 = panel_3.rowPixelAddress;
-    panel_3.rowStartPixel = panelRows.rowPixelPanel3;
-    panelRows.address4 = panel_4.rowPixelAddress;
-    panel_4.rowStartPixel = panelRows.rowPixelPanel4;
-    panelRows.address5 = panel_5.rowPixelAddress;
-    panel_5.rowStartPixel = panelRows.rowPixelPanel5;
-    panelRows.address6 = panel_6.rowPixelAddress;
-    panel_6.rowStartPixel = panelRows.rowPixelPanel6;
-    panelRows.address7 = panel_7.rowPixelAddress;
-    panel_7.rowStartPixel = panelRows.rowPixelPanel7;
-    panelRows.address8 = panel_8.rowPixelAddress;
-    panel_8.rowStartPixel = panelRows.rowPixelPanel8;
-    panelRows.address9 = panel_9.rowPixelAddress;
-    panel_9.rowStartPixel = panelRows.rowPixelPanel9;
-    panelRows.address10 = panel_10.rowPixelAddress;
-    panel_10.rowStartPixel = panelRows.rowPixelPanel10;
-    panelRows.address11 = panel_11.rowPixelAddress;
-    panel_11.rowStartPixel = panelRows.rowPixelPanel11;
-    panelRows.address12 = panel_12.rowPixelAddress;
-    panel_12.rowStartPixel = panelRows.rowPixelPanel12;
-    panelRows.address13 = panel_13.rowPixelAddress;
-    panel_13.rowStartPixel = panelRows.rowPixelPanel13;
-    panelRows.address14 = panel_14.rowPixelAddress;
-    panel_14.rowStartPixel = panelRows.rowPixelPanel14;
-    panelRows.address15 = panel_15.rowPixelAddress;
-    panel_15.rowStartPixel = panelRows.rowPixelPanel15;
-    panelRows.address16 = panel_16.rowPixelAddress;
-    panel_16.rowStartPixel = panelRows.rowPixelPanel16;
-    panelRows.address17 = panel_17.rowPixelAddress;
-    panel_17.rowStartPixel = panelRows.rowPixelPanel17;
-    panelRows.address18 = panel_18.rowPixelAddress;
-    panel_18.rowStartPixel = panelRows.rowPixelPanel18;
-    panelRows.address19 = panel_19.rowPixelAddress;
-    panel_19.rowStartPixel = panelRows.rowPixelPanel19;
-    panelRows.address20 = panel_20.rowPixelAddress;
-    panel_20.rowStartPixel = panelRows.rowPixelPanel20;
-    panelRows.address21 = panel_21.rowPixelAddress;
-    panel_21.rowStartPixel = panelRows.rowPixelPanel21;
-    panelRows.address22 = panel_22.rowPixelAddress;
-    panel_22.rowStartPixel = panelRows.rowPixelPanel22;
-    panelRows.address23 = panel_23.rowPixelAddress;
-    panel_23.rowStartPixel = panelRows.rowPixelPanel23;
-    panelRows.address24 = panel_24.rowPixelAddress;
-    panel_24.rowStartPixel = panelRows.rowPixelPanel24;
-    panelRows.address25 = panel_25.rowPixelAddress;
-    panel_25.rowStartPixel = panelRows.rowPixelPanel25;
-    panelRows.address26 = panel_26.rowPixelAddress;
-    panel_26.rowStartPixel = panelRows.rowPixelPanel26;
-    panelRows.address27 = panel_27.rowPixelAddress;
-    panel_27.rowStartPixel = panelRows.rowPixelPanel27;
-    panelRows.address28 = panel_28.rowPixelAddress;
-    panel_28.rowStartPixel = panelRows.rowPixelPanel28;
-    panelRows.address29 = panel_29.rowPixelAddress;
-    panel_29.rowStartPixel = panelRows.rowPixelPanel29;
-    panelRows.address30 = panel_30.rowPixelAddress;
-    panel_30.rowStartPixel = panelRows.rowPixelPanel30;
-    panelRows.address31 = panel_31.rowPixelAddress;
-    panel_31.rowStartPixel = panelRows.rowPixelPanel31;
-    panelRows.address32 = panel_32.rowPixelAddress;
-    panel_32.rowStartPixel = panelRows.rowPixelPanel32;
+    
+    panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_1.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_2.startWritingFlag = fifo_buffer.startWritingFlag;
 
     spi_out0.data_in = panel_0.ledByteOut;
-    spi_out0.start = panel_0.newSpiData;
-    panel_0.spiBusySignal = spi_out0.busy;
-    spi_out1.data_in = panel_1.ledByteOut;
-    spi_out1.start = panel_1.newSpiData;
-    panel_1.spiBusySignal = spi_out1.busy;
-    spi_out2.data_in = panel_2.ledByteOut;
-    spi_out2.start = panel_2.newSpiData;
-    panel_2.spiBusySignal = spi_out2.busy;
-    spi_out3.data_in = panel_3.ledByteOut;
-    spi_out3.start = panel_3.newSpiData;
-    panel_3.spiBusySignal = spi_out3.busy;
-    spi_out4.data_in = panel_4.ledByteOut;
-    spi_out4.start = panel_4.newSpiData;
-    panel_4.spiBusySignal = spi_out4.busy;
-    spi_out5.data_in = panel_5.ledByteOut;
-    spi_out5.start = panel_5.newSpiData;
-    panel_5.spiBusySignal = spi_out5.busy;
-    spi_out6.data_in = panel_6.ledByteOut;
-    spi_out6.start = panel_6.newSpiData;
-    panel_6.spiBusySignal = spi_out6.busy;
-    spi_out7.data_in = panel_7.ledByteOut;
-    spi_out7.start = panel_7.newSpiData;
-    panel_7.spiBusySignal = spi_out7.busy;
-    spi_out8.data_in = panel_8.ledByteOut;
-    spi_out8.start = panel_8.newSpiData;
-    panel_8.spiBusySignal = spi_out8.busy;
-    spi_out9.data_in = panel_9.ledByteOut;
-    spi_out9.start = panel_9.newSpiData;
-    panel_9.spiBusySignal = spi_out9.busy;
-    spi_out10.data_in = panel_10.ledByteOut;
-    spi_out10.start = panel_10.newSpiData;
-    panel_10.spiBusySignal = spi_out10.busy;
-    spi_out11.data_in = panel_11.ledByteOut;
-    spi_out11.start = panel_11.newSpiData;
-    panel_11.spiBusySignal = spi_out11.busy;
-    spi_out12.data_in = panel_12.ledByteOut;
-    spi_out12.start = panel_12.newSpiData;
-    panel_12.spiBusySignal = spi_out12.busy;
-    spi_out13.data_in = panel_13.ledByteOut;
-    spi_out13.start = panel_13.newSpiData;
-    panel_13.spiBusySignal = spi_out13.busy;
-    spi_out14.data_in = panel_14.ledByteOut;
-    spi_out14.start = panel_14.newSpiData;
-    panel_14.spiBusySignal = spi_out14.busy;
-    spi_out15.data_in = panel_15.ledByteOut;
-    spi_out15.start = panel_15.newSpiData;
-    panel_15.spiBusySignal = spi_out15.busy;
-    spi_out16.data_in = panel_16.ledByteOut;
-    spi_out16.start = panel_16.newSpiData;
-    panel_16.spiBusySignal = spi_out16.busy;
-    spi_out17.data_in = panel_17.ledByteOut;
-    spi_out17.start = panel_17.newSpiData;
-    panel_17.spiBusySignal = spi_out17.busy;
-    spi_out18.data_in = panel_18.ledByteOut;
-    spi_out18.start = panel_18.newSpiData;
-    panel_18.spiBusySignal = spi_out18.busy;
-    spi_out19.data_in = panel_19.ledByteOut;
-    spi_out19.start = panel_19.newSpiData;
-    panel_19.spiBusySignal = spi_out19.busy;
-    spi_out20.data_in = panel_20.ledByteOut;
-    spi_out20.start = panel_20.newSpiData;
-    panel_20.spiBusySignal = spi_out20.busy;
-    spi_out21.data_in = panel_21.ledByteOut;
-    spi_out21.start = panel_21.newSpiData;
-    panel_21.spiBusySignal = spi_out21.busy;
-    spi_out22.data_in = panel_22.ledByteOut;
-    spi_out22.start = panel_22.newSpiData;
-    panel_22.spiBusySignal = spi_out22.busy;
-    spi_out23.data_in = panel_23.ledByteOut;
-    spi_out23.start = panel_23.newSpiData;
-    panel_23.spiBusySignal = spi_out23.busy;
-    spi_out24.data_in = panel_24.ledByteOut;
-    spi_out24.start = panel_24.newSpiData;
-    panel_24.spiBusySignal = spi_out24.busy;
-    spi_out25.data_in = panel_25.ledByteOut;
-    spi_out25.start = panel_25.newSpiData;
-    panel_25.spiBusySignal = spi_out25.busy;
-    spi_out26.data_in = panel_26.ledByteOut;
-    spi_out26.start = panel_26.newSpiData;
-    panel_26.spiBusySignal = spi_out26.busy;
-    spi_out27.data_in = panel_27.ledByteOut;
-    spi_out27.start = panel_27.newSpiData;
-    panel_27.spiBusySignal = spi_out27.busy;
-    spi_out28.data_in = panel_28.ledByteOut;
-    spi_out28.start = panel_28.newSpiData;
-    panel_28.spiBusySignal = spi_out28.busy;
-    spi_out29.data_in = panel_29.ledByteOut;
-    spi_out29.start = panel_29.newSpiData;
-    panel_29.spiBusySignal = spi_out29.busy;
-    spi_out30.data_in = panel_30.ledByteOut;
-    spi_out30.start = panel_30.newSpiData;
-    panel_30.spiBusySignal = spi_out30.busy;
-    spi_out31.data_in = panel_31.ledByteOut;
-    spi_out31.start = panel_31.newSpiData;
-    panel_31.spiBusySignal = spi_out31.busy;
-    spi_out32.data_in = panel_32.ledByteOut;
-    spi_out32.start = panel_32.newSpiData;
-    panel_32.spiBusySignal = spi_out32.busy;
+    spi_out0.start = panel_0.newSpiData; 
+    panel_0.spiBusySignal = spi_out0.busy;   
 
+    spi_out1.data_in = panel_1.ledByteOut;
+    spi_out1.start = panel_1.newSpiData; 
+    panel_1.spiBusySignal = spi_out1.busy;
+
+    spi_out2.data_in = panel_2.ledByteOut;
+    spi_out2.start = panel_2.newSpiData; 
+    panel_2.spiBusySignal = spi_out2.busy;                
 
     spi_out0.miso = 1b0;
     apa102_data0 = spi_out0.mosi;
-    apa102_sck = spi_out0.sck;
+    
     spi_out1.miso = 1b0;
     apa102_data1 = spi_out1.mosi;
-    apa102_sck = spi_out1.sck;
+    
     spi_out2.miso = 1b0;
     apa102_data2 = spi_out2.mosi;
+
+    
+    apa102_sck = spi_out0.sck;
+    apa102_sck = spi_out1.sck;
     apa102_sck = spi_out2.sck;
-    spi_out3.miso = 1b0;
-    apa102_data3 = spi_out3.mosi;
-    apa102_sck = spi_out3.sck;
-    spi_out4.miso = 1b0;
-    apa102_data4 = spi_out4.mosi;
-    apa102_sck = spi_out4.sck;
-    spi_out5.miso = 1b0;
-    apa102_data5 = spi_out5.mosi;
-    apa102_sck = spi_out5.sck;
-    spi_out6.miso = 1b0;
-    apa102_data6 = spi_out6.mosi;
-    apa102_sck = spi_out6.sck;
-    spi_out7.miso = 1b0;
-    apa102_data7 = spi_out7.mosi;
-    apa102_sck = spi_out7.sck;
-    spi_out8.miso = 1b0;
-    apa102_data8 = spi_out8.mosi;
-    apa102_sck = spi_out8.sck;
-    spi_out9.miso = 1b0;
-    apa102_data9 = spi_out9.mosi;
-    apa102_sck = spi_out9.sck;
-    spi_out10.miso = 1b0;
-    apa102_data10 = spi_out10.mosi;
-    apa102_sck = spi_out10.sck;
-    spi_out11.miso = 1b0;
-    apa102_data11 = spi_out11.mosi;
-    apa102_sck = spi_out11.sck;
-    spi_out12.miso = 1b0;
-    apa102_data12 = spi_out12.mosi;
-    apa102_sck = spi_out12.sck;
-    spi_out13.miso = 1b0;
-    apa102_data13 = spi_out13.mosi;
-    apa102_sck = spi_out13.sck;
-    spi_out14.miso = 1b0;
-    apa102_data14 = spi_out14.mosi;
-    apa102_sck = spi_out14.sck;
-    spi_out15.miso = 1b0;
-    apa102_data15 = spi_out15.mosi;
-    apa102_sck = spi_out15.sck;
-    spi_out16.miso = 1b0;
-    apa102_data16 = spi_out16.mosi;
-    apa102_sck = spi_out16.sck;
-    spi_out17.miso = 1b0;
-    apa102_data17 = spi_out17.mosi;
-    apa102_sck = spi_out17.sck;
-    spi_out18.miso = 1b0;
-    apa102_data18 = spi_out18.mosi;
-    apa102_sck = spi_out18.sck;
-    spi_out19.miso = 1b0;
-    apa102_data19 = spi_out19.mosi;
-    apa102_sck = spi_out19.sck;
-    spi_out20.miso = 1b0;
-    apa102_data20 = spi_out20.mosi;
-    apa102_sck = spi_out20.sck;
-    spi_out21.miso = 1b0;
-    apa102_data21 = spi_out21.mosi;
-    apa102_sck = spi_out21.sck;
-    spi_out22.miso = 1b0;
-    apa102_data22 = spi_out22.mosi;
-    apa102_sck = spi_out22.sck;
-    spi_out23.miso = 1b0;
-    apa102_data23 = spi_out23.mosi;
-    apa102_sck = spi_out23.sck;
-    spi_out24.miso = 1b0;
-    apa102_data24 = spi_out24.mosi;
-    apa102_sck = spi_out24.sck;
-    spi_out25.miso = 1b0;
-    apa102_data25 = spi_out25.mosi;
-    apa102_sck = spi_out25.sck;
-    spi_out26.miso = 1b0;
-    apa102_data26 = spi_out26.mosi;
-    apa102_sck = spi_out26.sck;
-    spi_out27.miso = 1b0;
-    apa102_data27 = spi_out27.mosi;
-    apa102_sck = spi_out27.sck;
-    spi_out28.miso = 1b0;
-    apa102_data28 = spi_out28.mosi;
-    apa102_sck = spi_out28.sck;
-    spi_out29.miso = 1b0;
-    apa102_data29 = spi_out29.mosi;
-    apa102_sck = spi_out29.sck;
-    spi_out30.miso = 1b0;
-    apa102_data30 = spi_out30.mosi;
-    apa102_sck = spi_out30.sck;
-    spi_out31.miso = 1b0;
-    apa102_data31 = spi_out31.mosi;
-    apa102_sck = spi_out31.sck;
-    spi_out32.miso = 1b0;
-    apa102_data32 = spi_out32.mosi;
-    apa102_sck = spi_out32.sck;
 
-
-
-
-    gameCounter.d = gameCounter.q + 1;
-
-    led[0] = gameCounter.q[25];  // this is a heart beat counter ~ 1 per second
-
-    led[7:1] = 0;           //has a default black screen... turns on pixels momentarily if there is red
+    //panelRows.address0 = panel_0.rowPixelAddress;
+    //panel_0.rowStartPixel = panelRows.rowPixelPanel0;     
+ 
   }
 }
+
+  
