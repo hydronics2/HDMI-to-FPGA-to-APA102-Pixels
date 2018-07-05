@@ -18,12 +18,20 @@ module fifo_buffer (
     output rgbOut0[24],
     output rgbOut1[24],
     output rgbOut2[24],
+    output rgbOut3[24],
+    output rgbOut4[24],
+    output rgbOut5[24],    
     
     input writePixelAddress0[10],
     input writePixelAddress1[10],
     input writePixelAddress2[10],
+    input writePixelAddress3[10],
+    input writePixelAddress4[10],
+    input writePixelAddress5[10],
     
     output startWritingFlag,
+    
+    output postFifoPixelCount[24], //all the LEDs
     
   
     
@@ -32,9 +40,13 @@ module fifo_buffer (
     output newDataFlag,
     
     output rowPixelAddress[5],
+    
     input rowStartPixel0[10],
     input rowStartPixel1[10],
     input rowStartPixel2[10],
+    input rowStartPixel3[10],
+    input rowStartPixel4[10],
+    input rowStartPixel5[10],
     
     output notConnected[24]
     
@@ -54,7 +66,7 @@ module fifo_buffer (
     dff pixel[24];
     dff newPixelFlag[2];
     
-    dff pixelCounter[15]; //20,433 pixels
+    dff pixelCounter[24]; //20,433 pixels
     
     
   
@@ -64,7 +76,7 @@ module fifo_buffer (
     simple_ram rgb2 (#SIZE(24), #DEPTH(700));
     
     dff readWriteFlag[2];
-    //dff vSyncBuffer;
+
   }
  
  
@@ -78,6 +90,8 @@ module fifo_buffer (
     // defaults
     notConnected = 0;
     startWritingFlag = 0;
+    
+    postFifoPixelCount = pixelCounter.q;
 
     rowPixelAddress = rowCounter.q;
     
@@ -104,6 +118,9 @@ module fifo_buffer (
     rgbOut0 = 0;
     rgbOut1 = 0;
     rgbOut2 = 0;
+    rgbOut3 = 0;
+    rgbOut4 = 0;
+    rgbOut5 = 0;
     
     newDataFlag = 0;
     readFifo = 0;
@@ -112,17 +129,12 @@ module fifo_buffer (
     
     if(hdmi_vsyncFlag) //start of frame... reset pixel counter
     {
-
       readWriteFlag.d = 0;
       
       columnCounter.d = 101; //goes to lookup table
       rowCounter.d = 0;
       newPixelFlag.d = 0;
       pixelCounter.d = 0;
-      
-      //rgb0Counter.d = 679;
-      //rgb1Counter.d = 679;
-      //rgb2Counter.d = 679;
     }
     
     
@@ -143,11 +155,14 @@ module fifo_buffer (
         rgb1Counter.d = rowStartPixel1;
         rgb2Counter.d = rowStartPixel2;
       }      
-
     }
        
-
-  
+    if (!fifo.empty && readWriteFlag.q == 1) //just count pixels
+    {
+      fifo.rget = 1;
+      notConnected = fifo.dout[23:0];
+      pixelCounter.d = pixelCounter.q + 1;
+    }
 
 
     if(newPixelFlag.q == 1)
@@ -190,9 +205,7 @@ module fifo_buffer (
         }else{
           rgb2Counter.d = rgb2Counter.q + 1;
         }
-
       }
-  
     }  
     
       if(pixelCounter.q == 2039 && readWriteFlag.q == 0) //all 3 panels captured in ram
@@ -202,8 +215,6 @@ module fifo_buffer (
         newPixelFlag.d = 0;
         pixelCounter.d = 0;
       }
-    
-          
     
     if(readWriteFlag.q == 1)
     {

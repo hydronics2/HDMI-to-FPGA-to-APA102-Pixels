@@ -1,9 +1,6 @@
-//Section 1.
-//Panel 25.
-//start Pixel is 8126 w/ 6188 offset from bottom-left panel_0
-// bottom left start led
 
-module panel_0 (
+
+module panel_4 (
     input clk,  // clock
     input rst,
 
@@ -11,15 +8,16 @@ module panel_0 (
     output newSpiData,
     output ledByteOut[8],
     output ramPixelAddress[10],
-    
+
     output idle,
-    
+
     input rgbIn[24],
 
 
+    output transmitByte[8],
+    output newTxDataFlag,
+
     input startWritingFlag,
-    
-    output printSomething,
 
     output out
 
@@ -34,7 +32,7 @@ module panel_0 (
     dff ledStartBitCounter[4];
     dff rgbCounter[4];
 
-    dff pixelAddress[10]; // 
+    dff pixelAddress[10]; //
 
     dff panelControl1[2];
 
@@ -44,27 +42,27 @@ module panel_0 (
   always {
     out = 0;
     idle = 0;
-    
-    printSomething = 0;
+
+    transmitByte = 0;
+    newTxDataFlag = 0;
 
     newSpiData = 0;
     ledByteOut = 0;
     ramPixelAddress = 0;
-    
+
     rgbPixels.d[23:0] = rgbIn;
     ramPixelAddress = pixelAddress.q;
-    
+
     if(panelControl1.q == 0)
     {
       idle = 1;
     }
-    
+
 
     if(startWritingFlag == 1)
     {
       panelControl1.d = 3;
       ledStartBitCounter.d = 0;
-      //printSomething = 1;
     }
 
     if(panelControl1.q == 3)
@@ -80,7 +78,7 @@ module panel_0 (
 
         // Write LEDs to strip
       state.WRITE:
-      
+
         //ramPixelAddress = pixelAddress.q;
 
         if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
@@ -90,7 +88,7 @@ module panel_0 (
           ledStartBitCounter.d = ledStartBitCounter.q + 1;
 
           pixelAddress.d = 0; //start for panel 0
-          
+
           rgbCounter.d = 0;
         }
 
@@ -122,24 +120,23 @@ module panel_0 (
           }
 
           if(rgbCounter.q == 4) //wrote RG&B
-          { 
+          {
             pixelAddress.d = pixelAddress.q + 1;
             rgbCounter.d = 5;
-            
-          } 
+
+          }
           if(rgbCounter.q == 5) //get 1st pixel in next row
-          {     
+          {
             rgbCounter.d = 0;
             if(pixelAddress.q == 690) //end if wrote 0-19 rows
             {
-              ledStartBitCounter.d = 11; 
+              ledStartBitCounter.d = 11;
               panelControl1.d = 0;
               state.d = state.IDLE;
-              printSomething = 1;
             }
           }
         }
-        
-      } 
+
+      }
   }
 }

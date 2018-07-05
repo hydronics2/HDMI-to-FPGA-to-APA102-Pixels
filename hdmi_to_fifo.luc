@@ -97,7 +97,8 @@ module hdmi_to_fifo (
     //panel 0
     if(x_ctr.q >= X_START && y_ctr.q >= Y_START && hdmi_in.de) // active flag for Panel #1 module
     {
-      if(xAxis.q < X_LENGTH && y_ctr.q <251) //220 rows + starting at 30 => 250 (plus acouple extra)
+      //if(xAxis.q < X_LENGTH && y_ctr.q <251) //220 rows + starting at 30 => 250 (plus acouple extra)
+      if(xAxis.q < X_LENGTH) //220 rows + starting at 30 => 250 (plus acouple extra)
       {
         writeFifo = 1;
         redOut = red.q;

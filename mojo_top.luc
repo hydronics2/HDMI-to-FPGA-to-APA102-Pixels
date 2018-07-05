@@ -23,21 +23,22 @@
 //7/4/18 - hdmi_in11 - changed to clock to 90mhz and spi divider at 3... for 11.25mhz (spi) seemed to reduce flickering
 //7/4/18 - hdmi_in11 - running clock speed at 150mhz and divder at 3 for 9.34mhz(spi) seemed to eliminate ficker for 3 panels..
 
-//7/4/18 - hdmi_in12 - working BL, TR, BL
+//7/4/18 - hdmi_in12 - 3 panesl working BL, TR, BL
+//7/5/18 - hdmi_in13 - got transmit pixel working to show where i'm at
 
 module mojo_top (
     input clk,              // 50MHz clock
     input rst_n,            // reset button (active low)
     //output led [8],         // 8 user controllable LEDs
-    //input cclk,             // configuration clock, AVR ready when high
+    input cclk,             // configuration clock, AVR ready when high
     output spi_miso,        // AVR SPI MISO
-    //input spi_ss,           // AVR SPI Slave Select
-    //input spi_mosi,         // AVR SPI MOSI
-    //input spi_sck,          // AVR SPI Clock
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
     output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
-   //input avr_tx,           // AVR TX (FPGA RX)
+    input avr_tx,           // AVR TX (FPGA RX)
     output avr_rx,          // AVR RX (FPGA TX)
-    //input avr_rx_busy,       // AVR RX buffer full
+    input avr_rx_busy,       // AVR RX buffer full
     
     input hdmi2_tmds [4],   // HDMI In
     input hdmi2_tmdsb [4],
@@ -47,6 +48,10 @@ module mojo_top (
     output apa102_data0,
     output apa102_data1,
     output apa102_data2,
+    output apa102_data3,
+    output apa102_data4,
+    output apa102_data5,
+
     
     output apa102_sck
     
@@ -78,16 +83,22 @@ module mojo_top (
 
     panel_0 panel_0;
     panel_1 panel_1;
-    panel_2 panel_2;  
+    panel_2 panel_2;
+    panel_3 panel_3;
+    panel_4 panel_4;
+    panel_5 panel_5; 
       
       
     spi_master0 spi_out0;
     spi_master1 spi_out1;
     spi_master2 spi_out2;
+    spi_master3 spi_out3;
+    spi_master4 spi_out4;
+    spi_master5 spi_out5;
        
     fifo_buffer fifo_buffer;
        
-    //avr_interface avr(#CLK_FREQ(100000000));
+    avr_interface avr(#CLK_FREQ(150000000));
       
     
     }
@@ -106,90 +117,127 @@ module mojo_top (
     spi_channel = bzzzz;    // not using flags
     avr_rx = bz;            // not using serial port
     
-    //avr.cclk = cclk;
-    //avr.spi_ss = spi_ss;
-    //avr.spi_mosi = spi_mosi;
-    //avr.spi_sck = spi_sck;
-    //avr.rx = avr_tx;
-    //avr.channel = hf; // ADC is unused so disable
-    //avr.tx_block = avr_rx_busy; // block TX when AVR is busy
+    avr.cclk = cclk;
+    avr.spi_ss = spi_ss;
+    avr.spi_mosi = spi_mosi;
+    avr.spi_sck = spi_sck;
+    avr.rx = avr_tx;
+    avr.channel = hf; // ADC is unused so disable
+    avr.tx_block = avr_rx_busy; // block TX when AVR is busy
  
     // connect outputs of avr
-    //spi_miso = avr.spi_miso;
-    //spi_channel = avr.spi_channel;
-    //avr_rx = avr.tx;
-    //avr.new_tx_data = 0;
-    //avr.tx_data = 0;
+    spi_miso = avr.spi_miso;
+    spi_channel = avr.spi_channel;
+    avr_rx = avr.tx;
+    avr.new_tx_data = 0;
+    avr.tx_data = 0;
     
-    //avr.tx_data = fifo_buffer.transmitByte;
-    //avr.new_tx_data = fifo_buffer.newTxDataFlag;
+    
+    avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
+    //avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
+    //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
+    avr.new_tx_data = panel_0.printSomething;
     //panel_0.txBusy = avr.tx_busy;
    
     
     fifo_buffer.hdmi_clk = hdmi_to_fifo.hdmiClk;
     fifo_buffer.writeFifo = hdmi_to_fifo.writeFifo;
     
-    fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
-    fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
-    fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
-    
     fifo_buffer.redIn = hdmi_to_fifo.redOut;
     fifo_buffer.greenIn = hdmi_to_fifo.greenOut;
     fifo_buffer.blueIn = hdmi_to_fifo.blueOut;
     
-
-        
-    panel_0.rgbIn = fifo_buffer.rgbOut0;
-    panel_1.rgbIn = fifo_buffer.rgbOut1;
-    panel_2.rgbIn = fifo_buffer.rgbOut2;
-    
-
-   
     fifo_buffer.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
     
     fifo_buffer.notWriting = panel_0.idle;
     
+     // connect HDMI input
+    hdmi_to_fifo.tmds = hdmi2_tmds;
+    hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
+    
+    
+    fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
+    fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
+    fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
+    fifo_buffer.writePixelAddress3 = panel_3.ramPixelAddress;
+    fifo_buffer.writePixelAddress4 = panel_4.ramPixelAddress;
+    fifo_buffer.writePixelAddress5 = panel_5.ramPixelAddress;
+    
+        
+    panel_0.rgbIn = fifo_buffer.rgbOut0;
+    panel_1.rgbIn = fifo_buffer.rgbOut1;
+    panel_2.rgbIn = fifo_buffer.rgbOut2;
+    panel_3.rgbIn = fifo_buffer.rgbOut3;
+    panel_4.rgbIn = fifo_buffer.rgbOut4;
+    panel_5.rgbIn = fifo_buffer.rgbOut5;
+    
+
     panelRows.address0 = fifo_buffer.rowPixelAddress;
     panelRows.address1 = fifo_buffer.rowPixelAddress;
     panelRows.address2 = fifo_buffer.rowPixelAddress;
+    panelRows.address3 = fifo_buffer.rowPixelAddress;
+    panelRows.address4 = fifo_buffer.rowPixelAddress;
+    panelRows.address5 = fifo_buffer.rowPixelAddress;
     
     fifo_buffer.rowStartPixel0 = panelRows.rowPixelPanel0;
     fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
     fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
+    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel3;
+    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel4;
+    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel5;
     
-    // connect HDMI input
-    hdmi_to_fifo.tmds = hdmi2_tmds;
-    hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
-    
+   
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_1.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_2.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_3.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_4.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_5.startWritingFlag = fifo_buffer.startWritingFlag;
 
     spi_out0.data_in = panel_0.ledByteOut;
-    spi_out0.start = panel_0.newSpiData; 
-    panel_0.spiBusySignal = spi_out0.busy;   
+    spi_out0.start = panel_0.newSpiData;
+    panel_0.spiBusySignal = spi_out0.busy;
 
     spi_out1.data_in = panel_1.ledByteOut;
-    spi_out1.start = panel_1.newSpiData; 
+    spi_out1.start = panel_1.newSpiData;
     panel_1.spiBusySignal = spi_out1.busy;
 
     spi_out2.data_in = panel_2.ledByteOut;
-    spi_out2.start = panel_2.newSpiData; 
-    panel_2.spiBusySignal = spi_out2.busy;                
+    spi_out2.start = panel_2.newSpiData;
+    panel_2.spiBusySignal = spi_out2.busy;
+
+    spi_out3.data_in = panel_3.ledByteOut;
+    spi_out3.start = panel_3.newSpiData;
+    panel_3.spiBusySignal = spi_out3.busy;
+
+    spi_out4.data_in = panel_4.ledByteOut;
+    spi_out4.start = panel_4.newSpiData;
+    panel_4.spiBusySignal = spi_out4.busy;
+
+    spi_out5.data_in = panel_5.ledByteOut;
+    spi_out5.start = panel_5.newSpiData;
+    panel_5.spiBusySignal = spi_out5.busy;
+
+          
 
     spi_out0.miso = 1b0;
-    apa102_data0 = spi_out0.mosi;
-    
     spi_out1.miso = 1b0;
-    apa102_data1 = spi_out1.mosi;
-    
     spi_out2.miso = 1b0;
-    apa102_data2 = spi_out2.mosi;
+    spi_out3.miso = 1b0;
+    spi_out4.miso = 1b0;
+    spi_out5.miso = 1b0;
 
+    apa102_data0 = spi_out0.mosi;
+    apa102_data1 = spi_out1.mosi;
+    apa102_data2 = spi_out2.mosi;
+    apa102_data3 = spi_out3.mosi;
+    apa102_data4 = spi_out4.mosi;
+    apa102_data5 = spi_out5.mosi;
+    
     
     apa102_sck = spi_out0.sck;
-    apa102_sck = spi_out1.sck;
-    apa102_sck = spi_out2.sck;
+    //apa102_sck = spi_out1.sck;
+    //apa102_sck = spi_out2.sck;
 
     //panelRows.address0 = panel_0.rowPixelAddress;
     //panel_0.rowStartPixel = panelRows.rowPixelPanel0;     

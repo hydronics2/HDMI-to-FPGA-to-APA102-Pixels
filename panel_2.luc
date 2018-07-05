@@ -72,7 +72,6 @@ module panel_2 (
       state.IDLE:
         out = 1;
 
-        // Write LEDs to strip
       state.WRITE:
       
         ramPixelAddress = pixelAddress.q;
@@ -129,22 +128,13 @@ module panel_2 (
             rgbCounter.d = 0;
             if(pixelAddress.q == 690) //end if wrote 0-19 rows
             {
-              ledStartBitCounter.d = 6; 
+              ledStartBitCounter.d = 11; 
+              panelControl1.d = 0;
+              state.d = state.IDLE;
             }
           }
         }
         
-        if(ledStartBitCounter.q > 5 && ledStartBitCounter.q < 11 && !spiBusySignal) //end frame 4+ bytes of 8hFF
-        {  
-          ledByteOut = 8hff;
-          newSpiData = 1;
-          ledStartBitCounter.d = ledStartBitCounter.q + 1;
-        } 
-        if(ledStartBitCounter.q == 11)
-        {
-          panelControl1.d = 0;
-          state.d = state.IDLE;
-        }
       } 
   }
 }
