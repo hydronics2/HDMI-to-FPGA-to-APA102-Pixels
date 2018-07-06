@@ -135,7 +135,7 @@ module panel_0 (
               ledStartBitCounter.d = 11; 
               panelControl1.d = 0;
               state.d = state.IDLE;
-              printSomething = 1;
+              //printSomething = 1;
             }
           }
         }

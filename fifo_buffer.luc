@@ -30,6 +30,7 @@ module fifo_buffer (
     input writePixelAddress5[10],
     
     output startWritingFlag,
+    output startWritingFlag1,
     
     output postFifoPixelCount[24], //all the LEDs
     
@@ -47,6 +48,8 @@ module fifo_buffer (
     input rowStartPixel3[10],
     input rowStartPixel4[10],
     input rowStartPixel5[10],
+    
+    output printSomething,
     
     output notConnected[24]
     
@@ -89,7 +92,11 @@ module fifo_buffer (
   always {
     // defaults
     notConnected = 0;
+    
+    printSomething = 0;
+    
     startWritingFlag = 0;
+    startWritingFlag1 = 0;
     
     postFifoPixelCount = pixelCounter.q;
 
@@ -156,7 +163,29 @@ module fifo_buffer (
         rgb2Counter.d = rowStartPixel2;
       }      
     }
-       
+    
+    if (!fifo.empty && readWriteFlag.q == 2 && newPixelFlag.q == 0) 
+    {
+      fifo.rget = 1;
+      pixel.d = fifo.dout[23:0];
+      columnCounter.d = columnCounter.q + 1;
+      newPixelFlag.d = 1;
+      pixelCounter.d = pixelCounter.q + 1;
+      
+      if(columnCounter.q == 101)
+      {
+        rowCounter.d = rowCounter.q + 1;
+        columnCounter.d = 0;
+        rgb0Counter.d = rowStartPixel0;
+        rgb1Counter.d = rowStartPixel1;
+        rgb2Counter.d = rowStartPixel2;
+      }      
+    }
+    
+    
+    
+    
+           
     if (!fifo.empty && readWriteFlag.q == 1) //just count pixels
     {
       fifo.rget = 1;
@@ -213,7 +242,7 @@ module fifo_buffer (
         startWritingFlag = 1;
         readWriteFlag.d = 1;
         newPixelFlag.d = 0;
-        pixelCounter.d = 0;
+
       }
     
     if(readWriteFlag.q == 1)
@@ -229,6 +258,46 @@ module fifo_buffer (
       rgb2.address = writePixelAddress2;
       rgb2Counter.d = writePixelAddress2;
       rgbOut2 = rgb2.read_data;      
+    }
+    
+    if (pixelCounter.q == 12239) //get ready start reading next panels into ram
+    {
+      columnCounter.d = 101; //goes to lookup table
+      rowCounter.d = 0;
+    }
+
+    if (pixelCounter.q > 12239 && pixelCounter.q < 14311) //start writing into RAM for row 6....
+    {
+      readWriteFlag.d = 2;
+    }  
+        
+    if(pixelCounter.q == 14311 && readWriteFlag.q == 2) //all 3 panels captured in ram
+    {
+      startWritingFlag1 = 1;
+      readWriteFlag.d = 3;
+      newPixelFlag.d = 0;
+      //printSomething  = 1;
+    }   
+    
+    if(readWriteFlag.q == 3)
+    {
+      rgb0.address = writePixelAddress3;
+      rgb0Counter.d = writePixelAddress3;
+      rgbOut3 = rgb0.read_data;
+      
+      rgb1.address = writePixelAddress4;
+      rgb1Counter.d = writePixelAddress4;
+      rgbOut4 = rgb1.read_data;
+      
+      rgb2.address = writePixelAddress5;
+      rgb2Counter.d = writePixelAddress5;
+      rgbOut5 = rgb2.read_data;      
     }    
+    
+    
+    
+    
+    
+        
   }
 }

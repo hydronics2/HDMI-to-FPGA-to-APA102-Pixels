@@ -25,6 +25,9 @@
 
 //7/4/18 - hdmi_in12 - 3 panesl working BL, TR, BL
 //7/5/18 - hdmi_in13 - got transmit pixel working to show where i'm at
+//7/6/18 - abandoned 14 and 15.
+//       - hdmi_in16 - got 3 more panels writing.. probably 6 total..
+//       - had to include spi_clk for all 3 of panels 3,4&5 or there was a tiny flicker
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -133,10 +136,10 @@ module mojo_top (
     avr.tx_data = 0;
     
     
-    avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
-    //avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
+    //avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
+    avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
     //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
-    avr.new_tx_data = panel_0.printSomething;
+    avr.new_tx_data = fifo_buffer.printSomething;
     //panel_0.txBusy = avr.tx_busy;
    
     
@@ -190,9 +193,9 @@ module mojo_top (
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_1.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_2.startWritingFlag = fifo_buffer.startWritingFlag;
-    panel_3.startWritingFlag = fifo_buffer.startWritingFlag;
-    panel_4.startWritingFlag = fifo_buffer.startWritingFlag;
-    panel_5.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_3.startWritingFlag = fifo_buffer.startWritingFlag1;
+    panel_4.startWritingFlag = fifo_buffer.startWritingFlag1;
+    panel_5.startWritingFlag = fifo_buffer.startWritingFlag1;
 
     spi_out0.data_in = panel_0.ledByteOut;
     spi_out0.start = panel_0.newSpiData;
@@ -235,8 +238,11 @@ module mojo_top (
     apa102_data5 = spi_out5.mosi;
     
     
+    //need atleast one out of 3 panels pushing the clock
     apa102_sck = spi_out0.sck;
-    //apa102_sck = spi_out1.sck;
+    apa102_sck = spi_out3.sck;
+    apa102_sck = spi_out4.sck;
+    apa102_sck = spi_out5.sck;
     //apa102_sck = spi_out2.sck;
 
     //panelRows.address0 = panel_0.rowPixelAddress;
