@@ -28,6 +28,7 @@
 //7/6/18 - abandoned 14 and 15.
 //       - hdmi_in16 - got 3 more panels writing.. probably 6 total..
 //       - had to include spi_clk for all 3 of panels 3,4&5 or there was a tiny flicker
+//7/6/18 - hdmi_in17 - 6 panels writing.. the middle panel is glitchy.. looks like the spi is too fast..
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -139,7 +140,7 @@ module mojo_top (
     //avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
     avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
     //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
-    avr.new_tx_data = fifo_buffer.printSomething;
+    avr.new_tx_data = panel_0.printSomething;
     //panel_0.txBusy = avr.tx_busy;
    
     
@@ -237,13 +238,20 @@ module mojo_top (
     apa102_data4 = spi_out4.mosi;
     apa102_data5 = spi_out5.mosi;
     
-    
-    //need atleast one out of 3 panels pushing the clock
-    apa102_sck = spi_out0.sck;
-    apa102_sck = spi_out3.sck;
-    apa102_sck = spi_out4.sck;
-    apa102_sck = spi_out5.sck;
-    //apa102_sck = spi_out2.sck;
+    apa102_sck = bx;
+    if(panel_0.idle == 0)
+      apa102_sck = spi_out0.sck;
+    if(panel_1.idle == 0)
+      apa102_sck = spi_out1.sck;
+    if(panel_2.idle == 0)
+      apa102_sck = spi_out2.sck;
+    if(panel_3.idle == 0)
+      apa102_sck = spi_out3.sck;
+    if(panel_4.idle == 0)
+      apa102_sck = spi_out4.sck;
+    if(panel_5.idle == 0)
+      apa102_sck = spi_out5.sck;
+            
 
     //panelRows.address0 = panel_0.rowPixelAddress;
     //panel_0.rowStartPixel = panelRows.rowPixelPanel0;     

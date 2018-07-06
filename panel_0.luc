@@ -130,6 +130,7 @@ module panel_0 (
           if(rgbCounter.q == 5) //get 1st pixel in next row
           {     
             rgbCounter.d = 0;
+            printSomething = 1;
             if(pixelAddress.q == 690) //end if wrote 0-19 rows
             {
               ledStartBitCounter.d = 11; 

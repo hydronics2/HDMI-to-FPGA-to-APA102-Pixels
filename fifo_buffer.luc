@@ -242,7 +242,6 @@ module fifo_buffer (
         startWritingFlag = 1;
         readWriteFlag.d = 1;
         newPixelFlag.d = 0;
-
       }
     
     if(readWriteFlag.q == 1)
