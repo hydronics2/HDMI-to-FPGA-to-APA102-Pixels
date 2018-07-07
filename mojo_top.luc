@@ -28,7 +28,17 @@
 //7/6/18 - abandoned 14 and 15.
 //       - hdmi_in16 - got 3 more panels writing.. probably 6 total..
 //       - had to include spi_clk for all 3 of panels 3,4&5 or there was a tiny flicker
-//7/6/18 - hdmi_in17 - 6 panels writing.. the middle panel is glitchy.. looks like the spi is too fast..
+//7/6/18 - hdmi_in20 - got 3 panels working out of 6... again.. also got rid of most of the spi jitter (red stripes) on the 2nd panels.. still a bit jittery thought
+//7/6/18 - hdmi_in21 - six panels working at reduced frame rate.. just a tiny blinky for panels #2... running at 140mhz...
+//7/6/18 - hdmi_in22 - six panels (1st and last panel) working at reduced frame rate.. just a tiny blinky for panels #2... running at 140mhz...
+//7/6/18 - @ 140mhz last panel ends at about 34,300....
+//7/6/18 - hdmi_in23 - tried 130mhz.. no difference... finished last row at 1C (middle 8 bits) didn't check the high bits... 
+//7/6/18 - hdmi_in23 - tried 160mhz... red stripes on last middle panel..
+//7/6/18 - hdmi_in23 - tried 100mhz... looks OK accept for middle panels.... 38,911 pixels at end of writing.. started at 22,440.. so took 16,511 hdmi pixels at 100mhz
+//7/6/18 - hdmi_in23 - tried 120mhz ... 36,351 pixels at end of writing.... but bottom right panel is a little glitchy...
+//7/6/18 - hdmi_in23 - trying 130mhz again... 35,000 pixels at end of writing... ... just a little right/left glitch on right panels (top and bottom)
+//                    - 130mhz seems the best so far...
+
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -102,7 +112,7 @@ module mojo_top (
        
     fifo_buffer fifo_buffer;
        
-    avr_interface avr(#CLK_FREQ(150000000));
+    avr_interface avr(#CLK_FREQ(130000000));
       
     
     }
@@ -140,7 +150,7 @@ module mojo_top (
     //avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
     avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
     //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
-    avr.new_tx_data = panel_0.printSomething;
+    avr.new_tx_data = panel_3.printSomething;
     //panel_0.txBusy = avr.tx_busy;
    
     
@@ -238,7 +248,10 @@ module mojo_top (
     apa102_data4 = spi_out4.mosi;
     apa102_data5 = spi_out5.mosi;
     
+    
+    //need atleast one out of 3 panels pushing the clock
     apa102_sck = bx;
+    
     if(panel_0.idle == 0)
       apa102_sck = spi_out0.sck;
     if(panel_1.idle == 0)
@@ -251,7 +264,20 @@ module mojo_top (
       apa102_sck = spi_out4.sck;
     if(panel_5.idle == 0)
       apa102_sck = spi_out5.sck;
-            
+
+    //if(panel_0.idle == 1)
+      //apa102_data0 = 0;
+    //if(panel_1.idle == 1)
+      //apa102_data1 = 0;
+    //if(panel_2.idle == 1)
+      //apa102_data2 = 0;
+    //if(panel_3.idle == 1)
+      //apa102_data3 = 0;
+    //if(panel_4.idle == 1)
+      //apa102_data4 = 0;
+    //if(panel_5.idle == 1)
+      //apa102_data5 = 0;               
+
 
     //panelRows.address0 = panel_0.rowPixelAddress;
     //panel_0.rowStartPixel = panelRows.rowPixelPanel0;     

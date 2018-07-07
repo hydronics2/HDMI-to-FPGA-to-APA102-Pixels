@@ -55,8 +55,8 @@ module spi_master5 #(
     case (state.q) {
       state.IDLE:
         // reset the counters
-        sck_reg.d = 0;
-        ctr.d = 0;
+        //sck_reg.d = 0;
+        //ctr.d = 0;
 
         if (start) { // if we should start a new transfer
           data.d = data_in;         // save the data to send
@@ -83,6 +83,7 @@ module spi_master5 #(
           if (ctr.q == 3b111) {
             state.d = state.IDLE; // we're done
             new_data = 1;         // there's new data
+            ctr.d = 0;
           }
         }
     }

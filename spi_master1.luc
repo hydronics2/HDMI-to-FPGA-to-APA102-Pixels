@@ -56,7 +56,7 @@ module spi_master1 #(
     case (state.q) {
       state.IDLE:
         // reset the counters
-        sck_reg.d = 0;
+        //sck_reg.d = 0;
         ctr.d = 0;
         
         if (start) { // if we should start a new transfer

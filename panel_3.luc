@@ -14,8 +14,7 @@ module panel_3 (
     input rgbIn[24],
 
 
-    output transmitByte[8],
-    output newTxDataFlag,
+    output printSomething,
 
     input startWritingFlag,
 
@@ -43,8 +42,7 @@ module panel_3 (
     out = 0;
     idle = 0;
 
-    transmitByte = 0;
-    newTxDataFlag = 0;
+    printSomething = 0;
 
     newSpiData = 0;
     ledByteOut = 0;
@@ -130,6 +128,7 @@ module panel_3 (
             rgbCounter.d = 0;
             if(pixelAddress.q == 690) //end if wrote 0-19 rows
             {
+              printSomething = 1;
               ledStartBitCounter.d = 11;
               panelControl1.d = 0;
               state.d = state.IDLE;

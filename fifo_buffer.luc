@@ -71,6 +71,7 @@ module fifo_buffer (
     
     dff pixelCounter[24]; //20,433 pixels
     
+    dff frameCounter[5];
     
   
     // we need our RAM to have an entry for every value of name_count
@@ -78,7 +79,7 @@ module fifo_buffer (
     simple_ram rgb1 (#SIZE(24), #DEPTH(700));
     simple_ram rgb2 (#SIZE(24), #DEPTH(700));
     
-    dff readWriteFlag[2];
+    dff readWriteFlag[3];
 
   }
  
@@ -136,68 +137,68 @@ module fifo_buffer (
     
     if(hdmi_vsyncFlag) //start of frame... reset pixel counter
     {
+      frameCounter.d = frameCounter.q + 1;
       readWriteFlag.d = 0;
       
-      columnCounter.d = 101; //goes to lookup table
-      rowCounter.d = 0;
+      columnCounter.d = 0; 
+      rowCounter.d = 1;
       newPixelFlag.d = 0;
       pixelCounter.d = 0;
-    }
-    
-    
-    
-    if (!fifo.empty && readWriteFlag.q == 0 && newPixelFlag.q == 0) 
-    {
-      fifo.rget = 1;
-      pixel.d = fifo.dout[23:0];
-      columnCounter.d = columnCounter.q + 1;
-      newPixelFlag.d = 1;
-      pixelCounter.d = pixelCounter.q + 1;
       
-      if(columnCounter.q == 101)
-      {
-        rowCounter.d = rowCounter.q + 1;
-        columnCounter.d = 0;
-        rgb0Counter.d = rowStartPixel0;
-        rgb1Counter.d = rowStartPixel1;
-        rgb2Counter.d = rowStartPixel2;
-      }      
-    }
-    
-    if (!fifo.empty && readWriteFlag.q == 2 && newPixelFlag.q == 0) 
-    {
-      fifo.rget = 1;
-      pixel.d = fifo.dout[23:0];
-      columnCounter.d = columnCounter.q + 1;
-      newPixelFlag.d = 1;
-      pixelCounter.d = pixelCounter.q + 1;
+      rgb0Counter.d = 679;
+      rgb1Counter.d = 33;
+      rgb2Counter.d = 679;
       
-      if(columnCounter.q == 101)
-      {
-        rowCounter.d = rowCounter.q + 1;
-        columnCounter.d = 0;
-        rgb0Counter.d = rowStartPixel0;
-        rgb1Counter.d = rowStartPixel1;
-        rgb2Counter.d = rowStartPixel2;
-      }      
+      
+      if(frameCounter.q == 12)
+        frameCounter.d = 0;
     }
     
     
-    
-    
-           
-    if (!fifo.empty && readWriteFlag.q == 1) //just count pixels
+    if(frameCounter.q == 0)
     {
-      fifo.rget = 1;
-      notConnected = fifo.dout[23:0];
-      pixelCounter.d = pixelCounter.q + 1;
+      if(pixelCounter.q < 2040)
+      {
+        if (!fifo.empty && newPixelFlag.q == 0) 
+        {
+          fifo.rget = 1;
+          pixel.d = fifo.dout[23:0];
+          
+          newPixelFlag.d = 1;
+        }
+      }
     }
 
+    
+    if(frameCounter.q == 1)
+    {
+    //if (pixelCounter.q < 2040 && !fifo.empty) //row 1..  from (0-10)
+    if (pixelCounter.q < 20400 && !fifo.empty) // row 10... from(0-10)..
+      {
+        fifo.rget = 1;
+        notConnected = fifo.dout[23:0];
+        pixelCounter.d = pixelCounter.q + 1;
+      }
+      
+     //if(pixelCounter.q >= 2040 && pixelCounter.q < 4090)
+     if(pixelCounter.q >= 20400 && pixelCounter.q < 22440)
+      {     
+        if (!fifo.empty && newPixelFlag.q == 0) 
+        {
+          fifo.rget = 1;
+          pixel.d = fifo.dout[23:0];
+          //columnCounter.d = columnCounter.q + 1;
+          newPixelFlag.d = 1;
+          //pixelCounter.d = pixelCounter.q + 1;
+        }
+      }
+    }
+        
 
     if(newPixelFlag.q == 1)
     {
-      newPixelFlag.d = 0;
-
+      newPixelFlag.d = 2;
+      
       if(columnCounter.q < 34)
       {
         rgb0.write_data = pixel.q;
@@ -210,7 +211,6 @@ module fifo_buffer (
           rgb0Counter.d = rgb0Counter.q + 1;
         } 
       }
-        //else
       if(columnCounter.q > 33 && columnCounter.q < 68)
       {
         rgb1.write_data = pixel.q;
@@ -222,9 +222,10 @@ module fifo_buffer (
         }else{
           rgb1Counter.d = rgb1Counter.q + 1;
         }
-
       }
-      if(columnCounter.q > 67 && columnCounter.q < 102){
+
+      if(columnCounter.q > 67 && columnCounter.q < 102)
+      {
         rgb2.write_data = pixel.q;
         rgb2.write_en = 1;
         
@@ -237,12 +238,30 @@ module fifo_buffer (
       }
     }  
     
-      if(pixelCounter.q == 2039 && readWriteFlag.q == 0) //all 3 panels captured in ram
+    if(newPixelFlag.q == 2)
+    {
+      newPixelFlag.d = 0;
+      columnCounter.d = columnCounter.q + 1;
+      pixelCounter.d = pixelCounter.q + 1;
+      if(columnCounter.q == 101)
       {
-        startWritingFlag = 1;
-        readWriteFlag.d = 1;
-        newPixelFlag.d = 0;
-      }
+        rowCounter.d = rowCounter.q + 1;
+        columnCounter.d = 0;
+        rgb0Counter.d = rowStartPixel0;
+        rgb1Counter.d = rowStartPixel1;
+        rgb2Counter.d = rowStartPixel2;
+      }     
+    }
+    
+    if(pixelCounter.q == 2040 && frameCounter.q == 0) //all 3 panels captured in ram
+    {
+      startWritingFlag = 1;
+      readWriteFlag.d = 1;
+      newPixelFlag.d = 0;
+      //frameCounter.d = 1;
+      pixelCounter.d = pixelCounter.q + 1;
+
+    }
     
     if(readWriteFlag.q == 1)
     {
@@ -259,26 +278,26 @@ module fifo_buffer (
       rgbOut2 = rgb2.read_data;      
     }
     
-    if (pixelCounter.q == 12239) //get ready start reading next panels into ram
-    {
-      columnCounter.d = 101; //goes to lookup table
-      rowCounter.d = 0;
-    }
-
-    if (pixelCounter.q > 12239 && pixelCounter.q < 14311) //start writing into RAM for row 6....
-    {
-      readWriteFlag.d = 2;
-    }  
         
-    if(pixelCounter.q == 14311 && readWriteFlag.q == 2) //all 3 panels captured in ram
+    //if(pixelCounter.q == 4090 && frameCounter.q == 1) //all 3 panels captured in ram
+    if(pixelCounter.q == 22440 && frameCounter.q == 1) //all 3 panels captured in ram
     {
       startWritingFlag1 = 1;
-      readWriteFlag.d = 3;
+      readWriteFlag.d = 2;
       newPixelFlag.d = 0;
-      //printSomething  = 1;
+      pixelCounter.d = pixelCounter.q + 1;
     }   
     
-    if(readWriteFlag.q == 3)
+    //if(pixelCounter.q > 4090 && !fifo.empty) //just count pixels
+    if(pixelCounter.q > 22440 && !fifo.empty) //just count pixels
+      {
+        fifo.rget = 1;
+        notConnected = fifo.dout[23:0];
+        pixelCounter.d = pixelCounter.q + 1;
+    }
+    
+    
+    if(readWriteFlag.q == 2)
     {
       rgb0.address = writePixelAddress3;
       rgb0Counter.d = writePixelAddress3;
