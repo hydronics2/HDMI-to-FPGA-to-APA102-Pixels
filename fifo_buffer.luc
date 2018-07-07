@@ -22,7 +22,7 @@ module fifo_buffer (
     output rgbOut4[24],
     output rgbOut5[24],    
     
-    input writePixelAddress0[10],
+    input writePixelAddress0[10], //Address in RAM for when writing to LEDs
     input writePixelAddress1[10],
     input writePixelAddress2[10],
     input writePixelAddress3[10],
@@ -237,21 +237,37 @@ module fifo_buffer (
         }
       }
     }  
-    
-    if(newPixelFlag.q == 2)
-    {
-      newPixelFlag.d = 0;
-      columnCounter.d = columnCounter.q + 1;
-      pixelCounter.d = pixelCounter.q + 1;
-      if(columnCounter.q == 101)
-      {
-        rowCounter.d = rowCounter.q + 1;
-        columnCounter.d = 0;
-        rgb0Counter.d = rowStartPixel0;
-        rgb1Counter.d = rowStartPixel1;
-        rgb2Counter.d = rowStartPixel2;
-      }     
-    }
+    case (frameCounter.q) {
+      0:  if(newPixelFlag.q == 2)
+          {
+            newPixelFlag.d = 0;
+            columnCounter.d = columnCounter.q + 1;
+            pixelCounter.d = pixelCounter.q + 1;
+            if(columnCounter.q == 101)
+            {
+              rowCounter.d = rowCounter.q + 1;
+              columnCounter.d = 0;
+              rgb0Counter.d = rowStartPixel0;
+              rgb1Counter.d = rowStartPixel1;
+              rgb2Counter.d = rowStartPixel2;
+            }     
+          }
+        
+      1:  if(newPixelFlag.q == 2)
+          {
+            newPixelFlag.d = 0;
+            columnCounter.d = columnCounter.q + 1;
+            pixelCounter.d = pixelCounter.q + 1;
+            if(columnCounter.q == 101)
+            {
+              rowCounter.d = rowCounter.q + 1;
+              columnCounter.d = 0;
+              rgb0Counter.d = rowStartPixel3;
+              rgb1Counter.d = rowStartPixel4;
+              rgb2Counter.d = rowStartPixel5;
+            }     
+          }
+    }   
     
     if(pixelCounter.q == 2040 && frameCounter.q == 0) //all 3 panels captured in ram
     {

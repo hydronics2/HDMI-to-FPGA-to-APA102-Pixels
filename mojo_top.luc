@@ -38,7 +38,7 @@
 //7/6/18 - hdmi_in23 - tried 120mhz ... 36,351 pixels at end of writing.... but bottom right panel is a little glitchy...
 //7/6/18 - hdmi_in23 - trying 130mhz again... 35,000 pixels at end of writing... ... just a little right/left glitch on right panels (top and bottom)
 //                    - 130mhz seems the best so far...
-
+//7/7/18 - hdmi_in24 - writing top and bottom rows.. changed number from 0,1,2.... 30,21,32 from top to bottom..
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -186,19 +186,19 @@ module mojo_top (
     panel_5.rgbIn = fifo_buffer.rgbOut5;
     
 
+    //row count is always the same...
     panelRows.address0 = fifo_buffer.rowPixelAddress;
-    panelRows.address1 = fifo_buffer.rowPixelAddress;
-    panelRows.address2 = fifo_buffer.rowPixelAddress;
-    panelRows.address3 = fifo_buffer.rowPixelAddress;
-    panelRows.address4 = fifo_buffer.rowPixelAddress;
-    panelRows.address5 = fifo_buffer.rowPixelAddress;
+    //panelRows.address1 = fifo_buffer.rowPixelAddress;
+    //panelRows.address2 = fifo_buffer.rowPixelAddress;
+
     
     fifo_buffer.rowStartPixel0 = panelRows.rowPixelPanel0;
     fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
     fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
-    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel3;
-    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel4;
-    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel5;
+    
+    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel30;
+    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel31;
+    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel32;
     
    
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
