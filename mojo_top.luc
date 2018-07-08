@@ -38,7 +38,8 @@
 //7/6/18 - hdmi_in23 - tried 120mhz ... 36,351 pixels at end of writing.... but bottom right panel is a little glitchy...
 //7/6/18 - hdmi_in23 - trying 130mhz again... 35,000 pixels at end of writing... ... just a little right/left glitch on right panels (top and bottom)
 //                    - 130mhz seems the best so far...
-//7/7/18 - hdmi_in24 - writing top and bottom rows.. changed number from 0,1,2.... 30,21,32 from top to bottom..
+//7/7/18 - hdmi_in24 - writing top and bottom rows.. changed number from 0,1,2.... 30,31,32 from top to bottom..
+//7/7/18 - hdmi_in24 - writing 9 similar panels...
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -65,7 +66,9 @@ module mojo_top (
     output apa102_data3,
     output apa102_data4,
     output apa102_data5,
-
+    output apa102_data30,
+    output apa102_data31,
+    output apa102_data32,
     
     output apa102_sck
     
@@ -101,7 +104,9 @@ module mojo_top (
     panel_3 panel_3;
     panel_4 panel_4;
     panel_5 panel_5; 
-      
+    panel_30 panel_30;
+    panel_31 panel_31;
+    panel_32 panel_32;      
       
     spi_master0 spi_out0;
     spi_master1 spi_out1;
@@ -109,7 +114,11 @@ module mojo_top (
     spi_master3 spi_out3;
     spi_master4 spi_out4;
     spi_master5 spi_out5;
-       
+    spi_master30 spi_out30;
+    spi_master31 spi_out31;
+    spi_master32 spi_out32;
+      
+             
     fifo_buffer fifo_buffer;
        
     avr_interface avr(#CLK_FREQ(130000000));
@@ -173,18 +182,26 @@ module mojo_top (
     fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
     fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
     fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
+    
     fifo_buffer.writePixelAddress3 = panel_3.ramPixelAddress;
     fifo_buffer.writePixelAddress4 = panel_4.ramPixelAddress;
     fifo_buffer.writePixelAddress5 = panel_5.ramPixelAddress;
     
+    fifo_buffer.writePixelAddress30 = panel_30.ramPixelAddress;
+    fifo_buffer.writePixelAddress31 = panel_31.ramPixelAddress;
+    fifo_buffer.writePixelAddress32 = panel_32.ramPixelAddress;    
         
     panel_0.rgbIn = fifo_buffer.rgbOut0;
     panel_1.rgbIn = fifo_buffer.rgbOut1;
     panel_2.rgbIn = fifo_buffer.rgbOut2;
+    
     panel_3.rgbIn = fifo_buffer.rgbOut3;
     panel_4.rgbIn = fifo_buffer.rgbOut4;
     panel_5.rgbIn = fifo_buffer.rgbOut5;
     
+    panel_30.rgbIn = fifo_buffer.rgbOut30;
+    panel_31.rgbIn = fifo_buffer.rgbOut31;
+    panel_32.rgbIn = fifo_buffer.rgbOut32;    
 
     //row count is always the same...
     panelRows.address0 = fifo_buffer.rowPixelAddress;
@@ -196,9 +213,13 @@ module mojo_top (
     fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
     fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
     
-    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel30;
-    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel31;
-    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel32;
+    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel3;
+    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel4;
+    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel5;
+    
+    fifo_buffer.rowStartPixel30 = panelRows.rowPixelPanel30;
+    fifo_buffer.rowStartPixel31 = panelRows.rowPixelPanel31;
+    fifo_buffer.rowStartPixel32 = panelRows.rowPixelPanel32;
     
    
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
@@ -208,6 +229,10 @@ module mojo_top (
     panel_4.startWritingFlag = fifo_buffer.startWritingFlag1;
     panel_5.startWritingFlag = fifo_buffer.startWritingFlag1;
 
+    panel_30.startWritingFlag = fifo_buffer.startWritingFlag10;
+    panel_31.startWritingFlag = fifo_buffer.startWritingFlag10;
+    panel_32.startWritingFlag = fifo_buffer.startWritingFlag10;
+    
     spi_out0.data_in = panel_0.ledByteOut;
     spi_out0.start = panel_0.newSpiData;
     panel_0.spiBusySignal = spi_out0.busy;
@@ -232,6 +257,17 @@ module mojo_top (
     spi_out5.start = panel_5.newSpiData;
     panel_5.spiBusySignal = spi_out5.busy;
 
+    spi_out30.data_in = panel_30.ledByteOut;
+    spi_out30.start = panel_30.newSpiData;
+    panel_30.spiBusySignal = spi_out30.busy;
+
+    spi_out31.data_in = panel_31.ledByteOut;
+    spi_out31.start = panel_31.newSpiData;
+    panel_31.spiBusySignal = spi_out31.busy;
+
+    spi_out32.data_in = panel_32.ledByteOut;
+    spi_out32.start = panel_32.newSpiData;
+    panel_32.spiBusySignal = spi_out32.busy;
           
 
     spi_out0.miso = 1b0;
@@ -240,14 +276,19 @@ module mojo_top (
     spi_out3.miso = 1b0;
     spi_out4.miso = 1b0;
     spi_out5.miso = 1b0;
-
+    spi_out30.miso = 1b0;
+    spi_out31.miso = 1b0;
+    spi_out32.miso = 1b0;
+    
     apa102_data0 = spi_out0.mosi;
     apa102_data1 = spi_out1.mosi;
     apa102_data2 = spi_out2.mosi;
     apa102_data3 = spi_out3.mosi;
     apa102_data4 = spi_out4.mosi;
     apa102_data5 = spi_out5.mosi;
-    
+    apa102_data30 = spi_out30.mosi;
+    apa102_data31 = spi_out31.mosi;
+    apa102_data32 = spi_out32.mosi;
     
     //need atleast one out of 3 panels pushing the clock
     apa102_sck = bx;
@@ -264,7 +305,12 @@ module mojo_top (
       apa102_sck = spi_out4.sck;
     if(panel_5.idle == 0)
       apa102_sck = spi_out5.sck;
-
+    if(panel_30.idle == 0)
+      apa102_sck = spi_out30.sck;
+    if(panel_31.idle == 0)
+      apa102_sck = spi_out31.sck;
+    if(panel_32.idle == 0)
+      apa102_sck = spi_out32.sck;
     //if(panel_0.idle == 1)
       //apa102_data0 = 0;
     //if(panel_1.idle == 1)

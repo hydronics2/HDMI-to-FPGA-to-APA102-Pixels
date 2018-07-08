@@ -11,6 +11,10 @@ module panelRows (
     output rowPixelPanel1[10],
     output rowPixelPanel2[10],
     
+    output rowPixelPanel3[10],
+    output rowPixelPanel5[10],
+    output rowPixelPanel4[10],
+    
     output rowPixelPanel30[10],
     output rowPixelPanel31[10],
     output rowPixelPanel32[10]
@@ -22,6 +26,10 @@ module panelRows (
   sig tr1[ARRAY_SIZE][10];
   sig bl2[ARRAY_SIZE][10];
   
+  sig bl3[ARRAY_SIZE][10];
+  sig tr4[ARRAY_SIZE][10];
+  sig bl5[ARRAY_SIZE][10];
+    
   sig bl30[ARRAY_SIZE][10];
   sig tr31[ARRAY_SIZE][10];
   sig bl32[ARRAY_SIZE][10];
@@ -33,6 +41,10 @@ module panelRows (
     tr1 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
     bl2 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
     
+    bl3 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
+    tr4 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
+    bl5 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
+        
     
     bl30 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
     tr31 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
@@ -41,7 +53,11 @@ module panelRows (
     rowPixelPanel0 = bl0[address0]; //
     rowPixelPanel1 = tr1[address0]; //
     rowPixelPanel2 = bl2[address0]; //
-    
+
+    rowPixelPanel3 = bl3[address0]; //
+    rowPixelPanel4 = tr4[address0]; //
+    rowPixelPanel5 = bl5[address0]; //
+        
     rowPixelPanel30 = bl30[address0]; //
     rowPixelPanel31 = tr31[address0]; //
     rowPixelPanel32 = bl32[address0]; //

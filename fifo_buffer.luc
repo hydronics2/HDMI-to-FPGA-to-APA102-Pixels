@@ -7,6 +7,8 @@ module fifo_buffer (
     input hdmi_clk,
     
     input hdmi_vsyncFlag,
+    
+    output readFifo,
  
     input redIn[8],
     input greenIn[8],
@@ -21,6 +23,9 @@ module fifo_buffer (
     output rgbOut3[24],
     output rgbOut4[24],
     output rgbOut5[24],    
+    output rgbOut30[24],
+    output rgbOut31[24],
+    output rgbOut32[24],
     
     input writePixelAddress0[10], //Address in RAM for when writing to LEDs
     input writePixelAddress1[10],
@@ -28,26 +33,29 @@ module fifo_buffer (
     input writePixelAddress3[10],
     input writePixelAddress4[10],
     input writePixelAddress5[10],
+    input writePixelAddress30[10], //Address in RAM for when writing to LEDs
+    input writePixelAddress31[10],
+    input writePixelAddress32[10],
     
     output startWritingFlag,
     output startWritingFlag1,
+    output startWritingFlag10,
     
     output postFifoPixelCount[24], //all the LEDs
-    
-  
-    
-    output readFifo,
-    
-    output newDataFlag,
-    
+        
     output rowPixelAddress[5],
     
     input rowStartPixel0[10],
     input rowStartPixel1[10],
     input rowStartPixel2[10],
+    
     input rowStartPixel3[10],
     input rowStartPixel4[10],
     input rowStartPixel5[10],
+
+    input rowStartPixel30[10],
+    input rowStartPixel31[10],
+    input rowStartPixel32[10],
     
     output printSomething,
     
@@ -98,6 +106,7 @@ module fifo_buffer (
     
     startWritingFlag = 0;
     startWritingFlag1 = 0;
+    startWritingFlag10 = 0;
     
     postFifoPixelCount = pixelCounter.q;
 
@@ -129,15 +138,18 @@ module fifo_buffer (
     rgbOut3 = 0;
     rgbOut4 = 0;
     rgbOut5 = 0;
+    rgbOut30 = 0;
+    rgbOut31 = 0;
+    rgbOut32 = 0;
     
-    newDataFlag = 0;
     readFifo = 0;
-    
-   
-    
+
     if(hdmi_vsyncFlag) //start of frame... reset pixel counter
     {
       frameCounter.d = frameCounter.q + 1;
+      if(frameCounter.q == 11)
+        frameCounter.d = 0;
+      
       readWriteFlag.d = 0;
       
       columnCounter.d = 0; 
@@ -148,50 +160,57 @@ module fifo_buffer (
       rgb0Counter.d = 679;
       rgb1Counter.d = 33;
       rgb2Counter.d = 679;
-      
-      
-      if(frameCounter.q == 12)
-        frameCounter.d = 0;
     }
     
-    
-    if(frameCounter.q == 0)
+    case (frameCounter.q)
     {
-      if(pixelCounter.q < 2040)
-      {
-        if (!fifo.empty && newPixelFlag.q == 0) 
+      0:  //read  into RAM panels 0,1,2
+        if(pixelCounter.q < 2040)
         {
-          fifo.rget = 1;
-          pixel.d = fifo.dout[23:0];
+          if (!fifo.empty && newPixelFlag.q == 0) 
+          {
+            fifo.rget = 1;
+            pixel.d = fifo.dout[23:0];
+            
+            newPixelFlag.d = 1;
+          }
+        }
+        
+      1:  //read  into RAM last frame of LEDs (panels 30,31,& 32)
+        if (pixelCounter.q < 2040 && !fifo.empty) // just readout all the LED pixels before frame 3 starts..
+          {
+            fifo.rget = 1;
+            notConnected = fifo.dout[23:0];
+            pixelCounter.d = pixelCounter.q + 1;
+          }
           
-          newPixelFlag.d = 1;
-        }
-      }
-    }
-
-    
-    if(frameCounter.q == 1)
-    {
-    //if (pixelCounter.q < 2040 && !fifo.empty) //row 1..  from (0-10)
-    if (pixelCounter.q < 20400 && !fifo.empty) // row 10... from(0-10)..
-      {
-        fifo.rget = 1;
-        notConnected = fifo.dout[23:0];
-        pixelCounter.d = pixelCounter.q + 1;
-      }
-      
-     //if(pixelCounter.q >= 2040 && pixelCounter.q < 4090)
-     if(pixelCounter.q >= 20400 && pixelCounter.q < 22440)
-      {     
-        if (!fifo.empty && newPixelFlag.q == 0) 
-        {
-          fifo.rget = 1;
-          pixel.d = fifo.dout[23:0];
-          //columnCounter.d = columnCounter.q + 1;
-          newPixelFlag.d = 1;
-          //pixelCounter.d = pixelCounter.q + 1;
-        }
-      }
+         if(pixelCounter.q >= 2040 && pixelCounter.q < 4090)  //ok frame 3 is starting here
+          {     
+            if (!fifo.empty && newPixelFlag.q == 0) 
+            {
+              fifo.rget = 1;
+              pixel.d = fifo.dout[23:0];
+              newPixelFlag.d = 1;
+            }
+          }
+        
+      10:  //read  into RAM last frame of LEDs (panels 30,31,& 32)
+        if (pixelCounter.q < 20400 && !fifo.empty) // just readout all the LED pixels before frame 30 starts..
+          {
+            fifo.rget = 1;
+            notConnected = fifo.dout[23:0];
+            pixelCounter.d = pixelCounter.q + 1;
+          }
+          
+         if(pixelCounter.q >= 20400 && pixelCounter.q < 22440) //ok frame 30 is starting here
+          {     
+            if (!fifo.empty && newPixelFlag.q == 0) 
+            {
+              fifo.rget = 1;
+              pixel.d = fifo.dout[23:0];
+              newPixelFlag.d = 1;
+            }
+          }
     }
         
 
@@ -237,6 +256,8 @@ module fifo_buffer (
         }
       }
     }  
+    
+    //Adjust start and end pixels based on type of LED panel
     case (frameCounter.q) {
       0:  if(newPixelFlag.q == 2)
           {
@@ -267,68 +288,104 @@ module fifo_buffer (
               rgb2Counter.d = rowStartPixel5;
             }     
           }
-    }   
+      10:  if(newPixelFlag.q == 2)
+          {
+            newPixelFlag.d = 0;
+            columnCounter.d = columnCounter.q + 1;
+            pixelCounter.d = pixelCounter.q + 1;
+            if(columnCounter.q == 101)
+            {
+              rowCounter.d = rowCounter.q + 1;
+              columnCounter.d = 0;
+              rgb0Counter.d = rowStartPixel30;
+              rgb1Counter.d = rowStartPixel31;
+              rgb2Counter.d = rowStartPixel32;
+            }     
+          }
+    }    
     
-    if(pixelCounter.q == 2040 && frameCounter.q == 0) //all 3 panels captured in ram
-    {
-      startWritingFlag = 1;
-      readWriteFlag.d = 1;
-      newPixelFlag.d = 0;
-      //frameCounter.d = 1;
-      pixelCounter.d = pixelCounter.q + 1;
+    //finished reading frames......
+    case (frameCounter.q) {    
+      0:  
+        if(pixelCounter.q == 2040) //all 3 panels captured in ram
+        {
+          startWritingFlag = 1;
+          readWriteFlag.d = 1;
+          newPixelFlag.d = 0;
+          pixelCounter.d = pixelCounter.q + 1;  
+        }
+    
 
-    }
-    
-    if(readWriteFlag.q == 1)
-    {
-      rgb0.address = writePixelAddress0;
-      rgb0Counter.d = writePixelAddress0;
-      rgbOut0 = rgb0.read_data;
-      
-      rgb1.address = writePixelAddress1;
-      rgb1Counter.d = writePixelAddress1;
-      rgbOut1 = rgb1.read_data;
-      
-      rgb2.address = writePixelAddress2;
-      rgb2Counter.d = writePixelAddress2;
-      rgbOut2 = rgb2.read_data;      
-    }
-    
-        
-    //if(pixelCounter.q == 4090 && frameCounter.q == 1) //all 3 panels captured in ram
-    if(pixelCounter.q == 22440 && frameCounter.q == 1) //all 3 panels captured in ram
-    {
-      startWritingFlag1 = 1;
-      readWriteFlag.d = 2;
-      newPixelFlag.d = 0;
-      pixelCounter.d = pixelCounter.q + 1;
+      1:   
+        if(pixelCounter.q == 4090) //all 3 panels captured in ram
+        {
+          startWritingFlag1 = 1;
+          readWriteFlag.d = 1;
+          newPixelFlag.d = 0;
+          pixelCounter.d = pixelCounter.q + 1;
+        } 
+               
+      10:   
+        if(pixelCounter.q == 22440) //all 3 panels captured in ram
+        {
+          startWritingFlag10 = 1;
+          readWriteFlag.d = 1;
+          newPixelFlag.d = 0;
+          pixelCounter.d = pixelCounter.q + 1;
+        }
     }   
+
     
-    //if(pixelCounter.q > 4090 && !fifo.empty) //just count pixels
+    if(readWriteFlag.q)
+    {
+      case (frameCounter.q) {
+        0:  rgb0.address = writePixelAddress0;
+            rgb0Counter.d = writePixelAddress0;
+            rgbOut0 = rgb0.read_data;
+            
+            rgb1.address = writePixelAddress1;
+            rgb1Counter.d = writePixelAddress1;
+            rgbOut1 = rgb1.read_data;
+            
+            rgb2.address = writePixelAddress2;
+            rgb2Counter.d = writePixelAddress2;
+            rgbOut2 = rgb2.read_data;      
+                
+        1:   rgb0.address = writePixelAddress3;
+              rgb0Counter.d = writePixelAddress3;
+              rgbOut3 = rgb0.read_data;
+              
+              rgb1.address = writePixelAddress4;
+              rgb1Counter.d = writePixelAddress4;
+              rgbOut4 = rgb1.read_data;
+              
+              rgb2.address = writePixelAddress5;
+              rgb2Counter.d = writePixelAddress5;
+              rgbOut5 = rgb2.read_data; 
+               
+        10:   rgb0.address = writePixelAddress30;
+            rgb0Counter.d = writePixelAddress30;
+            rgbOut30 = rgb0.read_data;
+            
+            rgb1.address = writePixelAddress31;
+            rgb1Counter.d = writePixelAddress31;
+            rgbOut31 = rgb1.read_data;
+            
+            rgb2.address = writePixelAddress32;
+            rgb2Counter.d = writePixelAddress32;
+            rgbOut32 = rgb2.read_data;     
+        } 
+    } 
+    
+    
+    
+     //this is just for counting... to see how long it takes to finish writing based on where we are in the HDMI screen 1270x800
     if(pixelCounter.q > 22440 && !fifo.empty) //just count pixels
       {
         fifo.rget = 1;
         notConnected = fifo.dout[23:0];
         pixelCounter.d = pixelCounter.q + 1;
-    }
-    
-    
-    if(readWriteFlag.q == 2)
-    {
-      rgb0.address = writePixelAddress3;
-      rgb0Counter.d = writePixelAddress3;
-      rgbOut3 = rgb0.read_data;
-      
-      rgb1.address = writePixelAddress4;
-      rgb1Counter.d = writePixelAddress4;
-      rgbOut4 = rgb1.read_data;
-      
-      rgb2.address = writePixelAddress5;
-      rgb2Counter.d = writePixelAddress5;
-      rgbOut5 = rgb2.read_data;      
-    }    
-    
-    
+    }   
     
     
     
