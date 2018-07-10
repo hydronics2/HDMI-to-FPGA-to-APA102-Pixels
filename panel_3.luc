@@ -92,6 +92,10 @@ module panel_3 (
 
         if(ledStartBitCounter.q == 5) //1st led frame
         {
+          if(pixelAddress.q > 577)
+          {
+            rgbPixels.d = 0;
+          }
           if(rgbCounter.q == 0 && !spiBusySignal)
           {
             ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77

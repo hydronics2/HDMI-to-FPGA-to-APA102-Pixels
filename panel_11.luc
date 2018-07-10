@@ -1,12 +1,13 @@
+//frame 3 - 9,10,11
 
-
-module panel_4 (
+module panel_11 (
     input clk,  // clock
     input rst,
 
     input spiBusySignal,
     output newSpiData,
     output ledByteOut[8],
+
     output ramPixelAddress[10],
 
     output idle,
@@ -22,8 +23,6 @@ module panel_4 (
     output out
 
   ) {
-
-
 
   .clk(clk) {
     .rst(rst) {
@@ -51,7 +50,6 @@ module panel_4 (
     ramPixelAddress = 0;
 
     rgbPixels.d[23:0] = rgbIn;
-    ramPixelAddress = pixelAddress.q;
 
     if(panelControl1.q == 0)
     {
@@ -76,10 +74,9 @@ module panel_4 (
       state.IDLE:
         out = 1;
 
-        // Write LEDs to strip
       state.WRITE:
 
-        //ramPixelAddress = pixelAddress.q;
+        ramPixelAddress = pixelAddress.q;
 
         if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
         {
@@ -94,29 +91,27 @@ module panel_4 (
 
         if(ledStartBitCounter.q == 5) //1st led frame
         {
-          if(pixelAddress.q > 577)
-            {
-              rgbPixels.d = 0;
-            }   
-          
           if(rgbCounter.q == 0 && !spiBusySignal)
           {
             ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
             newSpiData = 1;
             rgbCounter.d = 1;
           }
+
           if(rgbCounter.q == 1 && !spiBusySignal)
           {
             ledByteOut = rgbPixels.q[23:16];
             newSpiData = 1;
             rgbCounter.d = 2;
           }
+
           if(rgbCounter.q == 2 && !spiBusySignal)
           {
             ledByteOut = rgbPixels.q[15:8];
             newSpiData = 1;
             rgbCounter.d = 3;
           }
+
           if(rgbCounter.q == 3 && !spiBusySignal)
           {
             ledByteOut = rgbPixels.q[7:0];
@@ -128,8 +123,8 @@ module panel_4 (
           {
             pixelAddress.d = pixelAddress.q + 1;
             rgbCounter.d = 5;
-
           }
+
           if(rgbCounter.q == 5) //get 1st pixel in next row
           {
             rgbCounter.d = 0;

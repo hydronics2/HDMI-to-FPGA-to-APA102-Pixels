@@ -1,6 +1,6 @@
+//frame 3 - 9,10,11
 
-
-module panel_4 (
+module panel_10 (
     input clk,  // clock
     input rst,
 
@@ -14,10 +14,9 @@ module panel_4 (
     input rgbIn[24],
 
 
-    output transmitByte[8],
-    output newTxDataFlag,
-
     input startWritingFlag,
+
+    output printSomething,
 
     output out
 
@@ -43,8 +42,7 @@ module panel_4 (
     out = 0;
     idle = 0;
 
-    transmitByte = 0;
-    newTxDataFlag = 0;
+    printSomething = 0;
 
     newSpiData = 0;
     ledByteOut = 0;
@@ -63,6 +61,7 @@ module panel_4 (
     {
       panelControl1.d = 3;
       ledStartBitCounter.d = 0;
+      //printSomething = 1;
     }
 
     if(panelControl1.q == 3)
@@ -94,11 +93,6 @@ module panel_4 (
 
         if(ledStartBitCounter.q == 5) //1st led frame
         {
-          if(pixelAddress.q > 577)
-            {
-              rgbPixels.d = 0;
-            }   
-          
           if(rgbCounter.q == 0 && !spiBusySignal)
           {
             ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
@@ -138,6 +132,7 @@ module panel_4 (
               ledStartBitCounter.d = 11;
               panelControl1.d = 0;
               state.d = state.IDLE;
+              printSomething = 1;
             }
           }
         }

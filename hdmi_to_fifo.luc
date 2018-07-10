@@ -15,7 +15,7 @@ module hdmi_to_fifo (
     output writeFifo,
     output hdmiClk,
     
-
+    output currentFrame[5],
     
     output hdmi_vsyncFlag,
     
@@ -49,7 +49,8 @@ module hdmi_to_fifo (
     
     dff xAxis[8]; //count 101 pixels wide per row of 3 panels
  
-    //dff hdmiPixelAddress[15]; // 22,440 pixels .. 15 is good for 32,000
+    dff pixelCounter[24]; //20,433 pixels
+    dff frameCounter[5];
   }
   
 
@@ -60,6 +61,8 @@ module hdmi_to_fifo (
     greenOut = 0;
     blueOut = 0;
     writeFifo = 0;
+    
+    
     
     hdmi_vsyncFlag = 0;
     
@@ -73,17 +76,29 @@ module hdmi_to_fifo (
     green.d = hdmi_in.green;
     blue.d = hdmi_in.blue;
     
-  
-    //transmitByte = 0;
-    //newTxDataFlag = 0;  
-    
+    //redOut = red.q;
+    //greenOut = green.q;
+    //blueOut = blue.q;
+    redOut = hdmi_in.red;
+    greenOut = hdmi_in.green;
+    blueOut = hdmi_in.blue;
+     
+      
+    //frameCounter.d = 10;
+    //currentFrame = 0;
     
     if (hdmi_in.vsync) {
       x_ctr.d = 0;
       y_ctr.d = 0;
+      pixelCounter.d = 0;
       hdmi_vsyncFlag = 1;
+      //currentFrame = frameCounter.q;
+      //frameCounter.d = frameCounter.q + 1;
     }
+    
+    currentFrame = frameCounter.q; //this should always be good sense this variable is only used at hdmi_in.vsync.
 
+    
     if(hdmi_in.hsync)
       x_ctr.d = 0;
       
@@ -100,14 +115,36 @@ module hdmi_to_fifo (
       //if(xAxis.q < X_LENGTH && y_ctr.q <251) //220 rows + starting at 30 => 250 (plus acouple extra)
       if(xAxis.q < X_LENGTH) //220 rows + starting at 30 => 250 (plus acouple extra)
       {
-        writeFifo = 1;
-        redOut = red.q;
-        greenOut = green.q;
-        blueOut = blue.q;
-
         xAxis.d = xAxis.q + 1;
+        pixelCounter.d = pixelCounter.q + 1;
+      
+        if(frameCounter.q == 0)
+        {
+          if(pixelCounter.q < 2040)
+          {
+            writeFifo = 1;
+          }
+        }
+        if(frameCounter.q == 10)
+        {
+          if(pixelCounter.q > 20399 && pixelCounter.q < 22440)
+          {
+            writeFifo = 1;
+          }
+        }          
       }
     }
+    
+    if(pixelCounter.q == 22440)
+    {
+      frameCounter.d = frameCounter.q + 1;
+    }
+    if(pixelCounter.q == 22441)
+    {    
+      if(frameCounter.q == 11)
+        frameCounter.d = 0;
+    }        
+    
     
     if(!hdmi_in.de)  //out of bounds
       xAxis.d = 0;

@@ -40,6 +40,10 @@
 //                    - 130mhz seems the best so far...
 //7/7/18 - hdmi_in24 - writing top and bottom rows.. changed number from 0,1,2.... 30,31,32 from top to bottom..
 //7/7/18 - hdmi_in24 - writing 9 similar panels...
+//7/8/18 - hdmi_in28 - writing to 6 panels in new way...
+//7/8/18 - hdmi_in29 - writing 9 panels...
+//7/8/18 - hdmi_in32 - 9 writing.. two of the 2nd row are writing.. the 3rd on the 2nd row is copying the 1st row??
+//7/9/18 - hdmi_in33 - scripts for 12 panels but only 6 in active code.. working well...
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -66,6 +70,11 @@ module mojo_top (
     output apa102_data3,
     output apa102_data4,
     output apa102_data5,
+    
+    output apa102_data9,
+    output apa102_data10,
+    output apa102_data11,
+        
     output apa102_data30,
     output apa102_data31,
     output apa102_data32,
@@ -101,6 +110,15 @@ module mojo_top (
     panel_0 panel_0;
     panel_1 panel_1;
     panel_2 panel_2;
+    
+    //frame 3  
+    panel_9 panel_9;
+    panel_10 panel_10;
+    panel_11 panel_11; 
+
+      
+      
+      
     panel_3 panel_3;
     panel_4 panel_4;
     panel_5 panel_5; 
@@ -111,6 +129,12 @@ module mojo_top (
     spi_master0 spi_out0;
     spi_master1 spi_out1;
     spi_master2 spi_out2;
+    
+      
+    spi_master9 spi_out9;
+    spi_master10 spi_out10;
+    spi_master11 spi_out11;
+            
     spi_master3 spi_out3;
     spi_master4 spi_out4;
     spi_master5 spi_out5;
@@ -159,7 +183,7 @@ module mojo_top (
     //avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
     avr.tx_data = fifo_buffer.postFifoPixelCount[15:8];
     //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
-    avr.new_tx_data = panel_3.printSomething;
+    avr.new_tx_data = fifo_buffer.printSomething;
     //panel_0.txBusy = avr.tx_busy;
    
     
@@ -178,61 +202,167 @@ module mojo_top (
     hdmi_to_fifo.tmds = hdmi2_tmds;
     hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
     
+    fifo_buffer.currentFrame = hdmi_to_fifo.currentFrame;
+    
     
     fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
     fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
     fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
-    
     fifo_buffer.writePixelAddress3 = panel_3.ramPixelAddress;
     fifo_buffer.writePixelAddress4 = panel_4.ramPixelAddress;
     fifo_buffer.writePixelAddress5 = panel_5.ramPixelAddress;
-    
+    //fifo_buffer.writePixelAddress6 = panel_6.ramPixelAddress;
+    //fifo_buffer.writePixelAddress7 = panel_7.ramPixelAddress;
+    //fifo_buffer.writePixelAddress8 = panel_8.ramPixelAddress;
+    fifo_buffer.writePixelAddress9 = panel_9.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress10 = panel_10.ramPixelAddress;
+    fifo_buffer.writePixelAddress11 = panel_11.ramPixelAddress;
+    //fifo_buffer.writePixelAddress12 = panel_12.ramPixelAddress;
+    //fifo_buffer.writePixelAddress13 = panel_13.ramPixelAddress;
+    //fifo_buffer.writePixelAddress14 = panel_14.ramPixelAddress;
+    //fifo_buffer.writePixelAddress15 = panel_15.ramPixelAddress;
+    //fifo_buffer.writePixelAddress16 = panel_16.ramPixelAddress;
+    //fifo_buffer.writePixelAddress17 = panel_17.ramPixelAddress;
+    //fifo_buffer.writePixelAddress18 = panel_18.ramPixelAddress;
+    //fifo_buffer.writePixelAddress19 = panel_19.ramPixelAddress;
+
+    //fifo_buffer.writePixelAddress20 = panel_20.ramPixelAddress;
+    //fifo_buffer.writePixelAddress21 = panel_21.ramPixelAddress;
+    //fifo_buffer.writePixelAddress22 = panel_22.ramPixelAddress;
+    //fifo_buffer.writePixelAddress23 = panel_23.ramPixelAddress;
+    //fifo_buffer.writePixelAddress24 = panel_24.ramPixelAddress;
+    //fifo_buffer.writePixelAddress25 = panel_25.ramPixelAddress;
+    //fifo_buffer.writePixelAddress26 = panel_26.ramPixelAddress;
+    //fifo_buffer.writePixelAddress27 = panel_27.ramPixelAddress;
+    //fifo_buffer.writePixelAddress28 = panel_28.ramPixelAddress;
+    //fifo_buffer.writePixelAddress29 = panel_29.ramPixelAddress;
+
     fifo_buffer.writePixelAddress30 = panel_30.ramPixelAddress;
     fifo_buffer.writePixelAddress31 = panel_31.ramPixelAddress;
-    fifo_buffer.writePixelAddress32 = panel_32.ramPixelAddress;    
-        
+    fifo_buffer.writePixelAddress32 = panel_32.ramPixelAddress;
+
+
+
     panel_0.rgbIn = fifo_buffer.rgbOut0;
     panel_1.rgbIn = fifo_buffer.rgbOut1;
     panel_2.rgbIn = fifo_buffer.rgbOut2;
-    
     panel_3.rgbIn = fifo_buffer.rgbOut3;
     panel_4.rgbIn = fifo_buffer.rgbOut4;
     panel_5.rgbIn = fifo_buffer.rgbOut5;
-    
+    //panel_6.rgbIn = fifo_buffer.rgbOut6;
+    //panel_7.rgbIn = fifo_buffer.rgbOut7;
+    //panel_8.rgbIn = fifo_buffer.rgbOut8;
+    panel_9.rgbIn = fifo_buffer.rgbOut9;
+
+    panel_10.rgbIn = fifo_buffer.rgbOut10;
+    panel_11.rgbIn = fifo_buffer.rgbOut11;
+    //panel_12.rgbIn = fifo_buffer.rgbOut12;
+    //panel_13.rgbIn = fifo_buffer.rgbOut13;
+    //panel_14.rgbIn = fifo_buffer.rgbOut14;
+    //panel_15.rgbIn = fifo_buffer.rgbOut15;
+    //panel_16.rgbIn = fifo_buffer.rgbOut16;
+    //panel_17.rgbIn = fifo_buffer.rgbOut17;
+    //panel_18.rgbIn = fifo_buffer.rgbOut18;
+    //panel_19.rgbIn = fifo_buffer.rgbOut19;
+
+    //panel_20.rgbIn = fifo_buffer.rgbOut20;
+    //panel_21.rgbIn = fifo_buffer.rgbOut21;
+    //panel_22.rgbIn = fifo_buffer.rgbOut22;
+    //panel_23.rgbIn = fifo_buffer.rgbOut23;
+    //panel_24.rgbIn = fifo_buffer.rgbOut24;
+    //panel_25.rgbIn = fifo_buffer.rgbOut25;
+    //panel_26.rgbIn = fifo_buffer.rgbOut26;
+    //panel_27.rgbIn = fifo_buffer.rgbOut27;
+    //panel_28.rgbIn = fifo_buffer.rgbOut28;
+    //panel_29.rgbIn = fifo_buffer.rgbOut29;
+
     panel_30.rgbIn = fifo_buffer.rgbOut30;
     panel_31.rgbIn = fifo_buffer.rgbOut31;
-    panel_32.rgbIn = fifo_buffer.rgbOut32;    
+    panel_32.rgbIn = fifo_buffer.rgbOut32;
 
-    //row count is always the same...
+
+
+
     panelRows.address0 = fifo_buffer.rowPixelAddress;
-    //panelRows.address1 = fifo_buffer.rowPixelAddress;
-    //panelRows.address2 = fifo_buffer.rowPixelAddress;
 
-    
+
+
     fifo_buffer.rowStartPixel0 = panelRows.rowPixelPanel0;
     fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
     fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
-    
     fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel3;
     fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel4;
     fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel5;
+    //fifo_buffer.rowStartPixel6 = panelRows.rowPixelPanel6;
+    //fifo_buffer.rowStartPixel7 = panelRows.rowPixelPanel7;
+    //fifo_buffer.rowStartPixel8 = panelRows.rowPixelPanel8;
+    //fifo_buffer.rowStartPixel9 = panelRows.rowPixelPanel0;
     
+    //fifo_buffer.rowStartPixel10 = panelRows.rowPixelPanel1;
+    //fifo_buffer.rowStartPixel11 = panelRows.rowPixelPanel2;
+    //fifo_buffer.rowStartPixel12 = panelRows.rowPixelPanel12;
+    //fifo_buffer.rowStartPixel13 = panelRows.rowPixelPanel13;
+    //fifo_buffer.rowStartPixel14 = panelRows.rowPixelPanel14;
+    //fifo_buffer.rowStartPixel15 = panelRows.rowPixelPanel15;
+    //fifo_buffer.rowStartPixel16 = panelRows.rowPixelPanel16;
+    //fifo_buffer.rowStartPixel17 = panelRows.rowPixelPanel17;
+    //fifo_buffer.rowStartPixel18 = panelRows.rowPixelPanel18;
+    //fifo_buffer.rowStartPixel19 = panelRows.rowPixelPanel19;
+
+    //fifo_buffer.rowStartPixel20 = panelRows.rowPixelPanel20;
+    //fifo_buffer.rowStartPixel21 = panelRows.rowPixelPanel21;
+    //fifo_buffer.rowStartPixel22 = panelRows.rowPixelPanel22;
+    //fifo_buffer.rowStartPixel23 = panelRows.rowPixelPanel23;
+    //fifo_buffer.rowStartPixel24 = panelRows.rowPixelPanel24;
+    //fifo_buffer.rowStartPixel25 = panelRows.rowPixelPanel25;
+    //fifo_buffer.rowStartPixel26 = panelRows.rowPixelPanel26;
+    //fifo_buffer.rowStartPixel27 = panelRows.rowPixelPanel27;
+    //fifo_buffer.rowStartPixel28 = panelRows.rowPixelPanel28;
+    //fifo_buffer.rowStartPixel29 = panelRows.rowPixelPanel29;
+
     fifo_buffer.rowStartPixel30 = panelRows.rowPixelPanel30;
     fifo_buffer.rowStartPixel31 = panelRows.rowPixelPanel31;
     fifo_buffer.rowStartPixel32 = panelRows.rowPixelPanel32;
-    
-   
+
+
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_1.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_2.startWritingFlag = fifo_buffer.startWritingFlag;
     panel_3.startWritingFlag = fifo_buffer.startWritingFlag1;
     panel_4.startWritingFlag = fifo_buffer.startWritingFlag1;
     panel_5.startWritingFlag = fifo_buffer.startWritingFlag1;
+   // panel_6.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_7.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_8.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_9.startWritingFlag = fifo_buffer.startWritingFlag3;
+
+    panel_10.startWritingFlag = fifo_buffer.startWritingFlag3;
+    panel_11.startWritingFlag = fifo_buffer.startWritingFlag3;
+    //panel_12.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_13.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_14.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_15.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_16.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_17.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_18.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_19.startWritingFlag = fifo_buffer.startWritingFlag;
+
+    //panel_20.startWritingFlag = fifo_buffer.startWritingFlag;
+    ////panel_21.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_22.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_23.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_24.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_25.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_26.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_27.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_28.startWritingFlag = fifo_buffer.startWritingFlag;
+    //panel_29.startWritingFlag = fifo_buffer.startWritingFlag;
 
     panel_30.startWritingFlag = fifo_buffer.startWritingFlag10;
     panel_31.startWritingFlag = fifo_buffer.startWritingFlag10;
     panel_32.startWritingFlag = fifo_buffer.startWritingFlag10;
-    
+
     spi_out0.data_in = panel_0.ledByteOut;
     spi_out0.start = panel_0.newSpiData;
     panel_0.spiBusySignal = spi_out0.busy;
@@ -257,6 +387,102 @@ module mojo_top (
     spi_out5.start = panel_5.newSpiData;
     panel_5.spiBusySignal = spi_out5.busy;
 
+    //spi_out6.data_in = panel_6.ledByteOut;
+    //spi_out6.start = panel_6.newSpiData;
+    //panel_6.spiBusySignal = spi_out6.busy;
+
+    //spi_out7.data_in = panel_7.ledByteOut;
+    //spi_out7.start = panel_7.newSpiData;
+   // panel_7.spiBusySignal = spi_out7.busy;
+
+    //spi_out8.data_in = panel_8.ledByteOut;
+    //spi_out8.start = panel_8.newSpiData;
+    //panel_8.spiBusySignal = spi_out8.busy;
+
+    spi_out9.data_in = panel_9.ledByteOut;
+    spi_out9.start = panel_9.newSpiData;
+    panel_9.spiBusySignal = spi_out9.busy;
+
+    spi_out10.data_in = panel_10.ledByteOut;
+    spi_out10.start = panel_10.newSpiData;
+    panel_10.spiBusySignal = spi_out10.busy;
+
+    spi_out11.data_in = panel_11.ledByteOut;
+    spi_out11.start = panel_11.newSpiData;
+    panel_11.spiBusySignal = spi_out11.busy;
+
+    //spi_out12.data_in = panel_12.ledByteOut;
+    //spi_out12.start = panel_12.newSpiData;
+    //panel_12.spiBusySignal = spi_out12.busy;
+
+    //spi_out13.data_in = panel_13.ledByteOut;
+    //spi_out13.start = panel_13.newSpiData;
+    //panel_13.spiBusySignal = spi_out13.busy;
+
+    //spi_out14.data_in = panel_14.ledByteOut;
+    //spi_out14.start = panel_14.newSpiData;
+    //panel_14.spiBusySignal = spi_out14.busy;
+
+    //spi_out15.data_in = panel_15.ledByteOut;
+    //spi_out15.start = panel_15.newSpiData;
+    //panel_15.spiBusySignal = spi_out15.busy;
+
+    //spi_out16.data_in = panel_16.ledByteOut;
+    //spi_out16.start = panel_16.newSpiData;
+    //panel_16.spiBusySignal = spi_out16.busy;
+
+    //spi_out17.data_in = panel_17.ledByteOut;
+    //spi_out17.start = panel_17.newSpiData;
+    //panel_17.spiBusySignal = spi_out17.busy;
+
+    //spi_out18.data_in = panel_18.ledByteOut;
+    //spi_out18.start = panel_18.newSpiData;
+    //panel_18.spiBusySignal = spi_out18.busy;
+
+    //spi_out19.data_in = panel_19.ledByteOut;
+    //spi_out19.start = panel_19.newSpiData;
+    //panel_19.spiBusySignal = spi_out19.busy;
+
+    //spi_out20.data_in = panel_20.ledByteOut;
+    //spi_out20.start = panel_20.newSpiData;
+    //panel_20.spiBusySignal = spi_out20.busy;
+
+    //spi_out21.data_in = panel_21.ledByteOut;
+    //spi_out21.start = panel_21.newSpiData;
+    //panel_21.spiBusySignal = spi_out21.busy;
+
+    //spi_out22.data_in = panel_22.ledByteOut;
+    //spi_out22.start = panel_22.newSpiData;
+    //panel_22.spiBusySignal = spi_out22.busy;
+
+    //spi_out23.data_in = panel_23.ledByteOut;
+    //spi_out23.start = panel_23.newSpiData;
+    //panel_23.spiBusySignal = spi_out23.busy;
+
+    //spi_out24.data_in = panel_24.ledByteOut;
+    //spi_out24.start = panel_24.newSpiData;
+    //panel_24.spiBusySignal = spi_out24.busy;
+
+    //spi_out25.data_in = panel_25.ledByteOut;
+    //spi_out25.start = panel_25.newSpiData;
+    //panel_25.spiBusySignal = spi_out25.busy;
+
+    //spi_out26.data_in = panel_26.ledByteOut;
+    //spi_out26.start = panel_26.newSpiData;
+    //panel_26.spiBusySignal = spi_out26.busy;
+
+    //spi_out27.data_in = panel_27.ledByteOut;
+    //spi_out27.start = panel_27.newSpiData;
+    //panel_27.spiBusySignal = spi_out27.busy;
+
+    //spi_out28.data_in = panel_28.ledByteOut;
+    //spi_out28.start = panel_28.newSpiData;
+    //panel_28.spiBusySignal = spi_out28.busy;
+
+    //spi_out29.data_in = panel_29.ledByteOut;
+    //spi_out29.start = panel_29.newSpiData;
+    //panel_29.spiBusySignal = spi_out29.busy;
+
     spi_out30.data_in = panel_30.ledByteOut;
     spi_out30.start = panel_30.newSpiData;
     panel_30.spiBusySignal = spi_out30.busy;
@@ -268,7 +494,7 @@ module mojo_top (
     spi_out32.data_in = panel_32.ledByteOut;
     spi_out32.start = panel_32.newSpiData;
     panel_32.spiBusySignal = spi_out32.busy;
-          
+
 
     spi_out0.miso = 1b0;
     spi_out1.miso = 1b0;
@@ -276,19 +502,76 @@ module mojo_top (
     spi_out3.miso = 1b0;
     spi_out4.miso = 1b0;
     spi_out5.miso = 1b0;
+    //spi_out6.miso = 1b0;
+    //spi_out7.miso = 1b0;
+    //spi_out8.miso = 1b0;
+    spi_out9.miso = 1b0;
+
+    spi_out10.miso = 1b0;
+    spi_out11.miso = 1b0;
+    //spi_out12.miso = 1b0;
+    //spi_out13.miso = 1b0;
+   // spi_out14.miso = 1b0;
+    //spi_out15.miso = 1b0;
+    //spi_out16.miso = 1b0;
+    //spi_out17.miso = 1b0;
+    //spi_out18.miso = 1b0;
+    //spi_out19.miso = 1b0;
+
+    //spi_out20.miso = 1b0;
+    //spi_out21.miso = 1b0;
+   // spi_out22.miso = 1b0;
+   // spi_out23.miso = 1b0;
+   // spi_out24.miso = 1b0;
+    //spi_out25.miso = 1b0;
+    //spi_out26.miso = 1b0;
+    //spi_out27.miso = 1b0;
+    //spi_out28.miso = 1b0;
+    //spi_out29.miso = 1b0;
+
     spi_out30.miso = 1b0;
     spi_out31.miso = 1b0;
     spi_out32.miso = 1b0;
-    
+
     apa102_data0 = spi_out0.mosi;
     apa102_data1 = spi_out1.mosi;
     apa102_data2 = spi_out2.mosi;
+    
     apa102_data3 = spi_out3.mosi;
     apa102_data4 = spi_out4.mosi;
     apa102_data5 = spi_out5.mosi;
-    apa102_data30 = spi_out30.mosi;
+    //apa102_data6 = spi_out6.mosi;
+    //apa102_data7 = spi_out7.mosi;
+    //apa102_data8 = spi_out8.mosi;
+    apa102_data9 = spi_out9.mosi;
+
+    apa102_data10 = spi_out10.mosi;
+    apa102_data11 = spi_out11.mosi;
+    //apa102_data12 = spi_out12.mosi;
+    //apa102_data13 = spi_out13.mosi;
+    //apa102_data14 = spi_out14.mosi;
+    //apa102_data15 = spi_out15.mosi;
+    //apa102_data16 = spi_out16.mosi;
+    //apa102_data17 = spi_out17.mosi;
+    //apa102_data18 = spi_out18.mosi;
+    //apa102_data19 = spi_out19.mosi;
+
+    //apa102_data20 = spi_out20.mosi;
+    //apa102_data21 = spi_out21.mosi;
+    //apa102_data22 = spi_out22.mosi;
+    //apa102_data23 = spi_out23.mosi;
+    //apa102_data24 = spi_out24.mosi;
+    //apa102_data25 = spi_out25.mosi;
+    //apa102_data26 = spi_out26.mosi;
+    //apa102_data27 = spi_out27.mosi;
+    //apa102_data28 = spi_out28.mosi;
+    //apa102_data29 = spi_out29.mosi;
+
     apa102_data31 = spi_out31.mosi;
     apa102_data32 = spi_out32.mosi;
+    apa102_data30 = spi_out30.mosi;
+
+    //apa102_sck = spi_out0.sck;
     
     //need atleast one out of 3 panels pushing the clock
     apa102_sck = bx;
@@ -305,6 +588,12 @@ module mojo_top (
       apa102_sck = spi_out4.sck;
     if(panel_5.idle == 0)
       apa102_sck = spi_out5.sck;
+    if(panel_9.idle == 0)
+      apa102_sck = spi_out9.sck;
+    if(panel_10.idle == 0)
+      apa102_sck = spi_out10.sck;
+    if(panel_11.idle == 0)
+      apa102_sck = spi_out11.sck;      
     if(panel_30.idle == 0)
       apa102_sck = spi_out30.sck;
     if(panel_31.idle == 0)
