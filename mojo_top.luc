@@ -44,6 +44,9 @@
 //7/8/18 - hdmi_in29 - writing 9 panels...
 //7/8/18 - hdmi_in32 - 9 writing.. two of the 2nd row are writing.. the 3rd on the 2nd row is copying the 1st row??
 //7/9/18 - hdmi_in33 - scripts for 12 panels but only 6 in active code.. working well...
+//7/9/18 - hdmi_in34 - 15 panels... 12 panels programmed and working...
+
+
 
 module mojo_top (
     input clk,              // 50MHz clock
@@ -74,6 +77,10 @@ module mojo_top (
     output apa102_data9,
     output apa102_data10,
     output apa102_data11,
+    
+    output apa102_data15,
+    output apa102_data16,
+    output apa102_data17,
         
     output apa102_data30,
     output apa102_data31,
@@ -116,12 +123,17 @@ module mojo_top (
     panel_10 panel_10;
     panel_11 panel_11; 
 
-      
+      //frame 5  
+    panel_9 panel_15;
+    panel_10 panel_16;
+    panel_11 panel_17; 
       
       
     panel_3 panel_3;
     panel_4 panel_4;
     panel_5 panel_5; 
+      
+      
     panel_30 panel_30;
     panel_31 panel_31;
     panel_32 panel_32;      
@@ -134,6 +146,10 @@ module mojo_top (
     spi_master9 spi_out9;
     spi_master10 spi_out10;
     spi_master11 spi_out11;
+      
+    spi_master15 spi_out15;
+    spi_master16 spi_out16;
+    spi_master17 spi_out17;
             
     spi_master3 spi_out3;
     spi_master4 spi_out4;
@@ -205,6 +221,12 @@ module mojo_top (
     fifo_buffer.currentFrame = hdmi_to_fifo.currentFrame;
     
     
+    panelRows.currentFrame = hdmi_to_fifo.currentFrame;
+    fifo_buffer.startPixel0 = panelRows.startPixel0;
+    fifo_buffer.startPixel1 = panelRows.startPixel1;
+    fifo_buffer.startPixel2 = panelRows.startPixel2;
+    
+    
     fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
     fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
     fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
@@ -221,9 +243,11 @@ module mojo_top (
     //fifo_buffer.writePixelAddress12 = panel_12.ramPixelAddress;
     //fifo_buffer.writePixelAddress13 = panel_13.ramPixelAddress;
     //fifo_buffer.writePixelAddress14 = panel_14.ramPixelAddress;
-    //fifo_buffer.writePixelAddress15 = panel_15.ramPixelAddress;
-    //fifo_buffer.writePixelAddress16 = panel_16.ramPixelAddress;
-    //fifo_buffer.writePixelAddress17 = panel_17.ramPixelAddress;
+    
+    fifo_buffer.writePixelAddress15 = panel_15.ramPixelAddress;
+    fifo_buffer.writePixelAddress16 = panel_16.ramPixelAddress;
+    fifo_buffer.writePixelAddress17 = panel_17.ramPixelAddress;
+    
     //fifo_buffer.writePixelAddress18 = panel_18.ramPixelAddress;
     //fifo_buffer.writePixelAddress19 = panel_19.ramPixelAddress;
 
@@ -260,9 +284,9 @@ module mojo_top (
     //panel_12.rgbIn = fifo_buffer.rgbOut12;
     //panel_13.rgbIn = fifo_buffer.rgbOut13;
     //panel_14.rgbIn = fifo_buffer.rgbOut14;
-    //panel_15.rgbIn = fifo_buffer.rgbOut15;
-    //panel_16.rgbIn = fifo_buffer.rgbOut16;
-    //panel_17.rgbIn = fifo_buffer.rgbOut17;
+    panel_15.rgbIn = fifo_buffer.rgbOut15;
+    panel_16.rgbIn = fifo_buffer.rgbOut16;
+    panel_17.rgbIn = fifo_buffer.rgbOut17;
     //panel_18.rgbIn = fifo_buffer.rgbOut18;
     //panel_19.rgbIn = fifo_buffer.rgbOut19;
 
@@ -321,9 +345,9 @@ module mojo_top (
     //fifo_buffer.rowStartPixel28 = panelRows.rowPixelPanel28;
     //fifo_buffer.rowStartPixel29 = panelRows.rowPixelPanel29;
 
-    fifo_buffer.rowStartPixel30 = panelRows.rowPixelPanel30;
-    fifo_buffer.rowStartPixel31 = panelRows.rowPixelPanel31;
-    fifo_buffer.rowStartPixel32 = panelRows.rowPixelPanel32;
+    //fifo_buffer.rowStartPixel30 = panelRows.rowPixelPanel30;
+    //fifo_buffer.rowStartPixel31 = panelRows.rowPixelPanel31;
+    //fifo_buffer.rowStartPixel32 = panelRows.rowPixelPanel32;
 
 
     panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
@@ -342,9 +366,9 @@ module mojo_top (
     //panel_12.startWritingFlag = fifo_buffer.startWritingFlag;
     //panel_13.startWritingFlag = fifo_buffer.startWritingFlag;
     //panel_14.startWritingFlag = fifo_buffer.startWritingFlag;
-    //panel_15.startWritingFlag = fifo_buffer.startWritingFlag;
-    //panel_16.startWritingFlag = fifo_buffer.startWritingFlag;
-    //panel_17.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_15.startWritingFlag = fifo_buffer.startWritingFlag5;
+    panel_16.startWritingFlag = fifo_buffer.startWritingFlag5;
+    panel_17.startWritingFlag = fifo_buffer.startWritingFlag5;
     //panel_18.startWritingFlag = fifo_buffer.startWritingFlag;
     //panel_19.startWritingFlag = fifo_buffer.startWritingFlag;
 
@@ -423,17 +447,17 @@ module mojo_top (
     //spi_out14.start = panel_14.newSpiData;
     //panel_14.spiBusySignal = spi_out14.busy;
 
-    //spi_out15.data_in = panel_15.ledByteOut;
-    //spi_out15.start = panel_15.newSpiData;
-    //panel_15.spiBusySignal = spi_out15.busy;
+    spi_out15.data_in = panel_15.ledByteOut;
+    spi_out15.start = panel_15.newSpiData;
+    panel_15.spiBusySignal = spi_out15.busy;
 
-    //spi_out16.data_in = panel_16.ledByteOut;
-    //spi_out16.start = panel_16.newSpiData;
-    //panel_16.spiBusySignal = spi_out16.busy;
+    spi_out16.data_in = panel_16.ledByteOut;
+    spi_out16.start = panel_16.newSpiData;
+    panel_16.spiBusySignal = spi_out16.busy;
 
-    //spi_out17.data_in = panel_17.ledByteOut;
-    //spi_out17.start = panel_17.newSpiData;
-    //panel_17.spiBusySignal = spi_out17.busy;
+    spi_out17.data_in = panel_17.ledByteOut;
+    spi_out17.start = panel_17.newSpiData;
+    panel_17.spiBusySignal = spi_out17.busy;
 
     //spi_out18.data_in = panel_18.ledByteOut;
     //spi_out18.start = panel_18.newSpiData;
@@ -512,17 +536,17 @@ module mojo_top (
     //spi_out12.miso = 1b0;
     //spi_out13.miso = 1b0;
    // spi_out14.miso = 1b0;
-    //spi_out15.miso = 1b0;
-    //spi_out16.miso = 1b0;
-    //spi_out17.miso = 1b0;
+    spi_out15.miso = 1b0;
+    spi_out16.miso = 1b0;
+    spi_out17.miso = 1b0;
     //spi_out18.miso = 1b0;
     //spi_out19.miso = 1b0;
 
     //spi_out20.miso = 1b0;
     //spi_out21.miso = 1b0;
-   // spi_out22.miso = 1b0;
-   // spi_out23.miso = 1b0;
-   // spi_out24.miso = 1b0;
+    //spi_out22.miso = 1b0;
+    //spi_out23.miso = 1b0;
+    //spi_out24.miso = 1b0;
     //spi_out25.miso = 1b0;
     //spi_out26.miso = 1b0;
     //spi_out27.miso = 1b0;
@@ -550,9 +574,9 @@ module mojo_top (
     //apa102_data12 = spi_out12.mosi;
     //apa102_data13 = spi_out13.mosi;
     //apa102_data14 = spi_out14.mosi;
-    //apa102_data15 = spi_out15.mosi;
-    //apa102_data16 = spi_out16.mosi;
-    //apa102_data17 = spi_out17.mosi;
+    apa102_data15 = spi_out15.mosi;
+    apa102_data16 = spi_out16.mosi;
+    apa102_data17 = spi_out17.mosi;
     //apa102_data18 = spi_out18.mosi;
     //apa102_data19 = spi_out19.mosi;
 
@@ -582,18 +606,28 @@ module mojo_top (
       apa102_sck = spi_out1.sck;
     if(panel_2.idle == 0)
       apa102_sck = spi_out2.sck;
+    
     if(panel_3.idle == 0)
       apa102_sck = spi_out3.sck;
     if(panel_4.idle == 0)
       apa102_sck = spi_out4.sck;
     if(panel_5.idle == 0)
       apa102_sck = spi_out5.sck;
+    
     if(panel_9.idle == 0)
       apa102_sck = spi_out9.sck;
     if(panel_10.idle == 0)
       apa102_sck = spi_out10.sck;
     if(panel_11.idle == 0)
       apa102_sck = spi_out11.sck;      
+    
+    if(panel_15.idle == 0)
+      apa102_sck = spi_out15.sck;
+    if(panel_16.idle == 0)
+      apa102_sck = spi_out16.sck;
+    if(panel_17.idle == 0)
+      apa102_sck = spi_out17.sck; 
+    
     if(panel_30.idle == 0)
       apa102_sck = spi_out30.sck;
     if(panel_31.idle == 0)

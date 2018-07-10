@@ -2,7 +2,7 @@
 
 
 
-module panel_9 (
+module panel_16 (
 
   input clk,  // clock
   input rst,
@@ -110,12 +110,12 @@ module panel_9 (
             newSpiData = 1;
             rgbCounter.d = 4;
           }
-  
+
           if(rgbCounter.q == 4) //wrote RG&B
           {
             pixelAddress.d = pixelAddress.q + 1;
             rgbCounter.d = 5;
-  
+
           }
           if(rgbCounter.q == 5) //get 1st pixel in next row
           {

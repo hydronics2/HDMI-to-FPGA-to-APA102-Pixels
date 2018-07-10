@@ -37,14 +37,14 @@ module hdmi_to_fifo (
   
   .clk(hdmi_in.pclk) {  //this is the clock speed inherited from the HDMI... not sure how fast it is?
   
-    fsm state = {IDLE, READ}; // our state machine
+    //fsm state = {IDLE, READ}; // our state machine
     
     dff x_ctr[11];
     dff y_ctr[11];
     
-    dff red[8];
-    dff green[8];
-    dff blue[8];
+    //dff red[8];
+    //dff green[8];
+    //dff blue[8];
     
     
     dff xAxis[8]; //count 101 pixels wide per row of 3 panels
@@ -72,9 +72,9 @@ module hdmi_to_fifo (
     hdmi_in.tmdsb = tmdsb;
     
     
-    red.d = hdmi_in.red;
-    green.d = hdmi_in.green;
-    blue.d = hdmi_in.blue;
+    //red.d = hdmi_in.red;
+    //green.d = hdmi_in.green;
+    //blue.d = hdmi_in.blue;
     
     //redOut = red.q;
     //greenOut = green.q;
@@ -124,7 +124,70 @@ module hdmi_to_fifo (
           {
             writeFifo = 1;
           }
+        }          
+        if(frameCounter.q == 1)
+        {
+          if(pixelCounter.q > 2039 && pixelCounter.q < 4080)
+          {
+            writeFifo = 1;
+          }
         }
+        if(frameCounter.q == 2)
+        {
+          if(pixelCounter.q > 4079 && pixelCounter.q < 6120)
+          {
+            writeFifo = 1;
+          }
+        } 
+        if(frameCounter.q == 3)
+        {
+          if(pixelCounter.q > 6119 && pixelCounter.q < 8160)
+          {
+            writeFifo = 1;
+          }
+        }
+        if(frameCounter.q == 4)
+        {
+          if(pixelCounter.q > 8159 && pixelCounter.q < 10200)
+          {
+            writeFifo = 1;
+          }
+        }   
+        if(frameCounter.q == 5)
+        {
+          if(pixelCounter.q > 10199 && pixelCounter.q < 12240)
+          {
+            writeFifo = 1;
+          }
+        } 
+        if(frameCounter.q == 6)
+        {
+          if(pixelCounter.q > 12239 && pixelCounter.q < 14280)
+          {
+            writeFifo = 1;
+          }
+        } 
+        if(frameCounter.q == 7)
+        {
+          if(pixelCounter.q > 14279 && pixelCounter.q < 16320)
+          {
+            writeFifo = 1;
+          }
+        } 
+        if(frameCounter.q == 8)
+        {
+          if(pixelCounter.q > 16319 && pixelCounter.q < 18360)
+          {
+            writeFifo = 1;
+          }
+        } 
+        if(frameCounter.q == 9)
+        {
+          if(pixelCounter.q > 18359 && pixelCounter.q < 20400)
+          {
+            writeFifo = 1;
+          }
+        }       
         if(frameCounter.q == 10)
         {
           if(pixelCounter.q > 20399 && pixelCounter.q < 22440)

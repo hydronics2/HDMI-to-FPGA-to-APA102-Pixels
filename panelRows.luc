@@ -1,4 +1,11 @@
 module panelRows (
+    input currentFrame[4],
+    
+    output startPixel0[10],
+    output startPixel1[10],
+    output startPixel2[10],
+    
+    
     input address0[5],  // ROM address
     //input address1[5],  // ROM address
     //input address2[5],  // ROM address
@@ -33,6 +40,12 @@ module panelRows (
   sig bl30[ARRAY_SIZE][10];
   sig tr31[ARRAY_SIZE][10];
   sig bl32[ARRAY_SIZE][10];
+  
+  const FRAMES = 11;
+  
+  sig pixels0[FRAMES][10];
+  sig pixels1[FRAMES][10];
+  sig pixels2[FRAMES][10];
 
   always {
     //#1 BL
@@ -61,5 +74,15 @@ module panelRows (
     rowPixelPanel30 = bl30[address0]; //
     rowPixelPanel31 = tr31[address0]; //
     rowPixelPanel32 = bl32[address0]; //
+    
+    
+    pixels0 = {10d679, 10d679,10d679,10d679,10d0,10d679,10d679,10d679, 10d676 ,10d0,10d679};
+    pixels1 = {10d33,10d33,10d634,10d33,10d33,10d33,10d33,10d634,10d33,10d33,10d33};
+    pixels2 = {10d679, 10d679,10d679,10d679,10d0,10d679,10d679,10d679, 10d676 ,10d0,10d679};
+    
+    
+    startPixel0 = pixels0[currentFrame];
+    startPixel1 = pixels1[currentFrame];
+    startPixel2 = pixels2[currentFrame];
   }
 }
