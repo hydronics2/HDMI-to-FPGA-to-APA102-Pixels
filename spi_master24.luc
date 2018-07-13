@@ -1,0 +1,91 @@
+module spi_master24 #(
+    //CLK_DIV = 8 : CLK_DIV > 1, // Clock divider
+    CLK_DIV = 4, //------------------------------  //8 is 2^8 => 256 or 50,000,000/256 is too slow
+                  // 4 is 2^4 is 50,000,000/16 or around 3Mhz
+
+                  // at 100,000,000 Mhz clock
+                  // 3 is 2^3 = 8 is 100,000,000/8 or 12.4Mhz ((slightly glitcy 7/1/18))
+                  // 4 is 2^4 = 16 is 100,000,000/16 or around 6.2Mhz spi clock
+                  // 5 is 2^5 = 32 is 100,000,000/32 or around 3.1Mhz spi clock
+
+                  // 4 is 2^4 = 16 is 150,000,000/16 or around 9hmz seems to be working without glitches 7/5 on hdmi_in11.
+
+    // clock polarity, 0 = inactive low, 1 = inactive high
+    CPOL = 0 : CPOL == 0 || CPOL == 1,
+
+    // clock phase, 0 = valid on leading edge, 1 = valid on trailing edge
+    CPHA = 0 : CPHA == 0 || CPHA == 1
+  )(
+    input clk,           // clock
+    input rst,           // reset
+    input miso,          // SPI MISO
+    output mosi,         // SPI MOSI
+    output sck,          // SPI SCK
+    input start,         // start transfer flag
+    input data_in[8],    // data to send
+    output data_out[8],  // data received
+    output new_data,     // data_out is valid
+    output busy          // bus is busy
+  ) {
+
+  .clk(clk) {
+    .rst(rst) { // only the FSM needs reset
+      fsm state = {IDLE, TRANSFER};
+    }
+
+    dff data[8];          // data storage for rx and tx
+    dff sck_reg[CLK_DIV]; // counter for SPI clock
+    dff mosi_reg;         // output buffer
+    dff ctr[3];           // bit counter
+  }
+
+  always {
+    new_data = 0;                  // default to no new data
+    busy = state.q != state.IDLE;  // busy when not idle
+
+    // data out can be set to data.q since we only
+    // guarentee it's valid when new_data is 1
+    data_out = data.q;
+
+    // the output clock is only active when we are sending data
+    sck = ((CPHA[0] ^ sck_reg.q[sck_reg.q.WIDTH-1]) & (state.q == state.TRANSFER)) ^ CPOL[0];
+
+    mosi = mosi_reg.q; // miso_reg is just a buffer for miso
+
+    case (state.q) {
+      state.IDLE:
+        // reset the counters
+        //sck_reg.d = 0;
+        //ctr.d = 0;
+
+        if (start) { // if we should start a new transfer
+          data.d = data_in;         // save the data to send
+          state.d = state.TRANSFER; // switch states
+        }
+
+      state.TRANSFER:
+        sck_reg.d = sck_reg.q + 1;
+
+        // at the start of each clock cycle
+        // output a new bit of data
+        if (sck_reg.q == 0)
+          mosi_reg.d = data.q[7];
+
+        // at the half way point read in miso
+        else if (sck_reg.q == (sck_reg.q.WIDTH-1)x{1})
+          data.d = c{data.q[6:0], miso};
+
+        // at the end of the clock cycle
+        else if (sck_reg.q == (sck_reg.q.WIDTH)x{1}) {
+          ctr.d = ctr.q + 1; // increment bit counter
+
+          // if we sent/received 8 bits
+          if (ctr.q == 3b111) {
+            state.d = state.IDLE; // we're done
+            new_data = 1;         // there's new data
+            ctr.d = 0;
+          }
+        }
+    }
+  }
+}

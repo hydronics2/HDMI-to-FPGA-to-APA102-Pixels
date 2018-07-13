@@ -1,9 +1,10 @@
+//frame 4......12,13,14..
 
-//Section 1. Frame 1. 3,4,5.
-//top right or top left, notched at bottom.. 
+//middle cut out.. all frames the same! even though BL, TR, BL...
 
 
-module panel_4 (
+
+module panel_13 (
 
     input clk,  // clock
     input rst,
@@ -17,7 +18,8 @@ module panel_4 (
     output idle,
     
     input rgbIn[24],
-    
+
+  
     input startWritingFlag,
 
     output out
@@ -41,7 +43,7 @@ module panel_4 (
   always {
     out = 0;
     idle = 0;
-
+    
     newSpiData = 0;
     ledByteOut = 0;
     ramPixelAddress = 0;
@@ -64,6 +66,7 @@ module panel_4 (
     {
       state.d = state.WRITE;
     }
+
 
     case (state.q) { // our FSM
       // IDLE: Reset everything and wait for HDMI panel#1 pixels.
@@ -88,7 +91,7 @@ module panel_4 (
 
         if(ledStartBitCounter.q == 5) //1st led frame
         {          
-          if(pixelAddress.q > 676) //notched at bottom
+          if(pixelAddress.q > 680) //notched at bottom
             rgbPixels.d = 0;
             
           if(rgbCounter.q == 0 && !spiBusySignal)
@@ -125,13 +128,16 @@ module panel_4 (
           if(rgbCounter.q == 5) //get 1st pixel in next row
           {     
             rgbCounter.d = 0;
-            if(pixelAddress.q == 578)
-              pixelAddress.d = 581;
-            if(pixelAddress.q == 609)
-              pixelAddress.d = 615;            
-            if(pixelAddress.q == 643)
-              pixelAddress.d = 649;       
-            
+            if(pixelAddress.q == 272)
+              pixelAddress.d = 275;
+            if(pixelAddress.q == 303)
+              pixelAddress.d = 309;            
+            if(pixelAddress.q == 337)
+              pixelAddress.d = 343;       
+            if(pixelAddress.q == 371)
+              pixelAddress.d = 377;
+            if(pixelAddress.q == 405)
+              pixelAddress.d = 408;
                         
             if(pixelAddress.q == 690) //end if wrote 0-19 rows
             {

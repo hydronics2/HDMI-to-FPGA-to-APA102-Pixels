@@ -19,28 +19,25 @@ module panelRows (
     output rowPixelPanel2[10],
     
     output rowPixelPanel3[10],
-    output rowPixelPanel5[10],
     output rowPixelPanel4[10],
+    output rowPixelPanel5[10],
     
-    output rowPixelPanel30[10],
-    output rowPixelPanel31[10],
-    output rowPixelPanel32[10]
+    output rowPixelPanel7[10]
+    
+
   ) {
  
   const ARRAY_SIZE = 20;
 
-  sig bl0[ARRAY_SIZE][10];
-  sig tr1[ARRAY_SIZE][10];
-  sig bl2[ARRAY_SIZE][10];
+  sig bottom_left_start[ARRAY_SIZE][10];
   
-  sig bl3[ARRAY_SIZE][10];
-  sig tr4[ARRAY_SIZE][10];
-  sig bl5[ARRAY_SIZE][10];
-    
-  sig bl30[ARRAY_SIZE][10];
-  sig tr31[ARRAY_SIZE][10];
-  sig bl32[ARRAY_SIZE][10];
+  sig bottom_right_start[ARRAY_SIZE][10];
   
+  sig top_left_start [ARRAY_SIZE][10];
+  sig top_left_start2 [ARRAY_SIZE][10];
+  sig top_right_start[ARRAY_SIZE][10];
+
+  //stores just the first pixel for each frame.
   const FRAMES = 11;
   
   sig pixels0[FRAMES][10];
@@ -50,35 +47,34 @@ module panelRows (
   always {
     //#1 BL
 
-    bl0 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
-    tr1 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
-    bl2 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
+    bottom_left_start = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
+  
+    top_left_start = {10d679,10d612,10d611,10d544,10d543,10d476,10d475,10d408,10d407,10d340,10d339,10d272,10d271,10d204,10d203,10d136,10d135,10d68,10d67,10d0};
+    top_left_start2 = {10d679,10d612,10d611,10d544,10d543,10d476,10d475,10d408,10d407,10d340,10d339,10d272,10d271,10d204,10d203,10d136,10d135,10d68,10d67,10d0};
     
-    bl3 = {10d682,10d615,10d614,10d544,10d543,10d476,10d475,10d408,10d407,10d340,10d339,10d272,10d271,10d204,10d203,10d136,10d135,10d68,10d67,10d0};
-    tr4 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
-    bl5 = {10d682,10d615,10d614,10d544,10d543,10d476,10d475,10d408,10d407,10d340,10d339,10d272,10d271,10d204,10d203,10d136,10d135,10d68,10d67,10d0};
-        
+    top_right_start = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
     
-    bl30 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
-    tr31 = {10d646,10d645,10d578,10d577,10d510,10d509,10d442,10d441,10d374,10d373,10d306,10d305,10d238,10d237,10d170,10d169,10d102,10d101,10d34,10d33};
-    bl32 = {10d0,10d67,10d68,10d135,10d136,10d203,10d204,10d271,10d272,10d339,10d340,10d407,10d408,10d475,10d476,10d543,10d544,10d611,10d612,10d679};
+    bottom_right_start = {10d33,10d34,10d101,10d102,10d169,10d170,10d237,10d238,10d305,10d306,10d373,10d374,10d441,10d442,10d509,10d510,10d577,10d578,10d645,10d646};
         
-    rowPixelPanel0 = bl0[address0]; //
-    rowPixelPanel1 = tr1[address0]; //
-    rowPixelPanel2 = bl2[address0]; //
+    rowPixelPanel0 = bottom_left_start[address0]; //
+    rowPixelPanel1 = top_right_start[address0]; //
+    rowPixelPanel2 = bottom_left_start[address0]; //
 
-    rowPixelPanel3 = bl3[address0]; //
-    rowPixelPanel4 = tr4[address0]; //
-    rowPixelPanel5 = bl5[address0]; //
+    rowPixelPanel3 = top_left_start [address0]; //
+    rowPixelPanel4 = top_right_start[address0]; //
+    rowPixelPanel5 = top_left_start2 [address0]; //
+    
+    rowPixelPanel7 = bottom_right_start [address0]; //
         
-    rowPixelPanel30 = bl30[address0]; //
-    rowPixelPanel31 = tr31[address0]; //
-    rowPixelPanel32 = bl32[address0]; //
+
     
     
-    pixels0 = {10d679, 10d679,10d679,10d679,10d0,10d679,10d679,10d679, 10d676 ,10d0,10d679};
-    pixels1 = {10d33,10d33,10d634,10d33,10d33,10d33,10d33,10d634,10d33,10d33,10d33};
-    pixels2 = {10d679, 10d679,10d679,10d679,10d0,10d679,10d679,10d679, 10d676 ,10d0,10d679};
+    //these are just the first pixel for each frame reprinted in a seperate array... works well..
+    
+     //  frame: 10       9       8       7       6      5       4        3       2       1        0   
+    pixels0 = {10d679, 10d679,  10d679, 10d679, 10d0,  10d679, 10d679,   10d679, 10d679, 10d679,  10d679};
+    pixels1 = {10d33,  10d33,   10d33,  10d646, 10d33, 10d33,  10d33,    10d33,  10d33,  10d33,   10d33};
+    pixels2 = {10d679, 10d679,  10d679, 10d679, 10d0,  10d679, 10d679,   10d679, 10d679, 10d679,  10d679};
     
     
     startPixel0 = pixels0[currentFrame];

@@ -10,7 +10,6 @@ module panel_1 (
     input spiBusySignal,
     output newSpiData,
     output ledByteOut[8],
-    
     output ramPixelAddress[10],
     
     output idle,
@@ -18,14 +17,15 @@ module panel_1 (
     input rgbIn[24],
 
 
-    output transmitByte[8],
-    output newTxDataFlag,
-    
     input startWritingFlag,
+    
+    output printSomething,
 
     output out
 
   ) {
+
+
 
   .clk(clk) {
     .rst(rst) {
@@ -45,15 +45,15 @@ module panel_1 (
     out = 0;
     idle = 0;
     
-    transmitByte = 0;
-    newTxDataFlag = 0;
+    printSomething = 0;
 
     newSpiData = 0;
     ledByteOut = 0;
     ramPixelAddress = 0;
     
     rgbPixels.d[23:0] = rgbIn;
-
+    ramPixelAddress = pixelAddress.q;
+    
     if(panelControl1.q == 0)
     {
       idle = 1;
@@ -64,6 +64,7 @@ module panel_1 (
     {
       panelControl1.d = 3;
       ledStartBitCounter.d = 0;
+      //printSomething = 1;
     }
 
     if(panelControl1.q == 3)
@@ -80,7 +81,7 @@ module panel_1 (
         // Write LEDs to strip
       state.WRITE:
       
-        ramPixelAddress = pixelAddress.q;
+        //ramPixelAddress = pixelAddress.q;
 
         if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
         {
@@ -134,6 +135,7 @@ module panel_1 (
               ledStartBitCounter.d = 11; 
               panelControl1.d = 0;
               state.d = state.IDLE;
+              printSomething = 1;
             }
           }
         }
@@ -141,3 +143,4 @@ module panel_1 (
       } 
   }
 }
+

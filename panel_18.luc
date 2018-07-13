@@ -1,9 +1,8 @@
-
-//Section 1. Frame 1. 3,4,5.
+//frame 6... 18,19,20
 //top right or top left, notched at bottom.. 
 
 
-module panel_4 (
+module panel_18 (
 
     input clk,  // clock
     input rst,
@@ -17,7 +16,8 @@ module panel_4 (
     output idle,
     
     input rgbIn[24],
-    
+
+  
     input startWritingFlag,
 
     output out
@@ -41,7 +41,7 @@ module panel_4 (
   always {
     out = 0;
     idle = 0;
-
+    
     newSpiData = 0;
     ledByteOut = 0;
     ramPixelAddress = 0;
@@ -64,6 +64,7 @@ module panel_4 (
     {
       state.d = state.WRITE;
     }
+
 
     case (state.q) { // our FSM
       // IDLE: Reset everything and wait for HDMI panel#1 pixels.

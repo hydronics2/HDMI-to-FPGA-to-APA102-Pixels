@@ -31,32 +31,30 @@ module fifo_buffer (
     output rgbOut3[24],
     output rgbOut4[24],
     output rgbOut5[24],
-    //output rgbOut6[24],
-    //output rgbOut7[24],
-    //output rgbOut8[24],
+    output rgbOut6[24],
+    output rgbOut7[24],
+    output rgbOut8[24],
     output rgbOut9[24],
-
     output rgbOut10[24],
     output rgbOut11[24],
-    //output rgbOut12[24],
-    //output rgbOut13[24],
-    //output rgbOut14[24],
+    output rgbOut12[24],
+    output rgbOut13[24],
+    output rgbOut14[24],
     output rgbOut15[24],
     output rgbOut16[24],
     output rgbOut17[24],
-    //output rgbOut18[24],
-    //output rgbOut19[24],
-
-    //output rgbOut20[24],
-    //output rgbOut21[24],
-    //output rgbOut22[24],
-    //output rgbOut23[24],
-    //output rgbOut24[24],
-    //output rgbOut25[24],
-    //output rgbOut26[24],
-    //output rgbOut27[24],
-    //output rgbOut28[24],
-    //output rgbOut29[24],
+    output rgbOut18[24],
+    output rgbOut19[24],
+    output rgbOut20[24],
+    output rgbOut21[24],
+    output rgbOut22[24],
+    output rgbOut23[24],
+    output rgbOut24[24],
+    output rgbOut25[24],
+    output rgbOut26[24],
+    output rgbOut27[24],
+    output rgbOut28[24],
+    output rgbOut29[24],
     output rgbOut30[24],
     output rgbOut31[24],
     output rgbOut32[24],
@@ -67,32 +65,30 @@ module fifo_buffer (
     input writePixelAddress3[10],
     input writePixelAddress4[10],
     input writePixelAddress5[10],
-    //input writePixelAddress6[10],
-    //input writePixelAddress7[10],
-    //input writePixelAddress8[10],
+    input writePixelAddress6[10],
+    input writePixelAddress7[10],
+    input writePixelAddress8[10],
     input writePixelAddress9[10],
-
     input writePixelAddress10[10],
     input writePixelAddress11[10],
-    //input writePixelAddress12[10],
-    //input writePixelAddress13[10],
-    //input writePixelAddress14[10],
+    input writePixelAddress12[10],
+    input writePixelAddress13[10],
+    input writePixelAddress14[10],
     input writePixelAddress15[10],
     input writePixelAddress16[10],
     input writePixelAddress17[10],
-    //input writePixelAddress18[10],
-    //input writePixelAddress19[10],
-
-    //input writePixelAddress20[10],
-    //input writePixelAddress21[10],
-    //input writePixelAddress22[10],
-    //input writePixelAddress23[10],
-    //input writePixelAddress24[10],
-    //input writePixelAddress25[10],
-    //input writePixelAddress26[10],
-    //input writePixelAddress27[10],
-    //input writePixelAddress28[10],
-    //input writePixelAddress29[10],
+    input writePixelAddress18[10],
+    input writePixelAddress19[10],
+    input writePixelAddress20[10],
+    input writePixelAddress21[10],
+    input writePixelAddress22[10],
+    input writePixelAddress23[10],
+    input writePixelAddress24[10],
+    input writePixelAddress25[10],
+    input writePixelAddress26[10],
+    input writePixelAddress27[10],
+    input writePixelAddress28[10],
+    input writePixelAddress29[10],
 
     input writePixelAddress30[10],
     input writePixelAddress31[10],
@@ -100,9 +96,14 @@ module fifo_buffer (
     
     output startWritingFlag,
     output startWritingFlag1,
+    output startWritingFlag2,
     output startWritingFlag3,
-    
+    output startWritingFlag4,
     output startWritingFlag5,
+    output startWritingFlag6,
+    output startWritingFlag7,
+    output startWritingFlag8,
+    output startWritingFlag9,
     output startWritingFlag10,
     
     
@@ -113,17 +114,16 @@ module fifo_buffer (
         
     output rowPixelAddress[5],
     
-    input rowStartPixel0[10],
-    input rowStartPixel1[10],
-    input rowStartPixel2[10],
-    input rowStartPixel3[10],
-    input rowStartPixel4[10],
-    input rowStartPixel5[10],
+    input rowStartPixel0[10],  //bottom left
+    input rowStartPixel1[10],  //top right
+    input rowStartPixel2[10],  //bottom left
+    input rowStartPixel3[10], //top left
+    input rowStartPixel4[10], //top right
+    input rowStartPixel5[10],  //top left
     //input rowStartPixel6[10],
-    //input rowStartPixel7[10],
+    input rowStartPixel7[10],
     //input rowStartPixel8[10],
     //input rowStartPixel9[10],
-
     //input rowStartPixel10[10],
     //input rowStartPixel11[10],
     //input rowStartPixel12[10],
@@ -134,7 +134,6 @@ module fifo_buffer (
     //input rowStartPixel17[10],
     //input rowStartPixel18[10],
     //input rowStartPixel19[10],
-
     //input rowStartPixel20[10],
     //input rowStartPixel21[10],
     //input rowStartPixel22[10],
@@ -162,39 +161,7 @@ module fifo_buffer (
     dff rgb0Counter[10];
     dff rgb1Counter[10];
     dff rgb2Counter[10];
-    dff rgb3Counter[10];
-    dff rgb4Counter[10];
-    dff rgb5Counter[10];
-    dff rgb6Counter[10];
-    dff rgb7Counter[10];
-    dff rgb8Counter[10];
-    dff rgb9Counter[10];
 
-
-    dff rgb10Counter[10];
-    dff rgb11Counter[10];
-    dff rgb12Counter[10];
-    dff rgb13Counter[10];
-    dff rgb14Counter[10];
-    dff rgb15Counter[10];
-    dff rgb16Counter[10];
-    dff rgb17Counter[10];
-    dff rgb18Counter[10];
-    dff rgb19Counter[10];
-
-    dff rgb20Counter[10];
-    dff rgb21Counter[10];
-    dff rgb22Counter[10];
-    dff rgb23Counter[10];
-    dff rgb24Counter[10];
-    dff rgb25Counter[10];
-    dff rgb26Counter[10];
-    dff rgb27Counter[10];
-    dff rgb28Counter[10];
-    dff rgb29Counter[10];
-    dff rgb30Counter[10];
-    dff rgb31Counter[10];
-    dff rgb32Counter[10];
     
     dff rowCounter[8]; //219 rows
     dff columnCounter[7]; //102 columns wide
@@ -210,12 +177,14 @@ module fifo_buffer (
     dff frame1Write;
     dff frame2Write;
     dff frame3Write;
+    dff frame4Write;
     dff frame5Write;
+    dff frame6Write;
+    dff frame7Write;
+    dff frame8Write;
+    dff frame9Write;
     dff frame10Write;
     
-    dff startFlipPixel0[10];
-    dff startFlipPixel1[10];
-    dff startFlipPixel2[10];
 
   
     // we need our RAM to have an entry for every value of name_count
@@ -239,8 +208,14 @@ module fifo_buffer (
     
     startWritingFlag = 0;
     startWritingFlag1 = 0;
+    startWritingFlag2 = 0; 
     startWritingFlag3 = 0;
+    startWritingFlag4 = 0; 
     startWritingFlag5 = 0;
+    startWritingFlag6 = 0; 
+    startWritingFlag7 = 0; 
+    startWritingFlag8 = 0; 
+    startWritingFlag9 = 0; 
     startWritingFlag10 = 0;
     
     //postFifoPixelCount = pixelCounter.q;
@@ -259,10 +234,7 @@ module fifo_buffer (
     rgb2.address = rgb2Counter.q;
     rgb2.write_data = 8hxx;
     rgb2.write_en = 0;
-    
-    startFlipPixel0.d = startPixel0;
-    startFlipPixel1.d = startPixel1;
-    startFlipPixel2.d = startPixel2;
+
     
     fifo.wput = writeFifo;   // always put data into the fifo
     //fifo.wput = 1;
@@ -277,13 +249,32 @@ module fifo_buffer (
     rgbOut2 = 0;
     rgbOut3 = 0;
     rgbOut4 = 0;
-    rgbOut5 = 0;
+    rgbOut5 = 0;    
+    rgbOut6 = 0;
+    rgbOut7 = 0;
+    rgbOut8 = 0;
     rgbOut9 = 0;
     rgbOut10 = 0;
     rgbOut11 = 0;
+    rgbOut12 = 0;
+    rgbOut13 = 0;
+    rgbOut14 = 0;
     rgbOut15 = 0;
     rgbOut16 = 0;
     rgbOut17 = 0;
+    
+    rgbOut18 = 0;
+    rgbOut19 = 0;
+    rgbOut20 = 0;
+    rgbOut21 = 0;
+    rgbOut22 = 0;
+    rgbOut23 = 0;    
+    rgbOut24 = 0;
+    rgbOut25 = 0;
+    rgbOut26 = 0;
+    rgbOut27 = 0;
+    rgbOut28 = 0;
+    rgbOut29 = 0;
     rgbOut30 = 0;
     rgbOut31 = 0;
     rgbOut32 = 0;
@@ -306,47 +297,19 @@ module fifo_buffer (
       
       frame0Write.d = 0;
       frame1Write.d = 0; 
-      frame3Write.d = 0;    
+      frame2Write.d = 0;
+      frame3Write.d = 0;
+      frame4Write.d = 0;    
       frame5Write.d = 0;
-      frame10Write.d = 0; 
-      
+      frame6Write.d = 0;
+      frame7Write.d = 0;
+      frame8Write.d = 0;
+      frame9Write.d = 0;
+      frame10Write.d = 0;       
       
       frameCounter.d = currentFrame;
     }    
-  
-    //if(setStartFrame.q)
-    //{
-      //setStartFrame.d = 2;
-      //if(frameCounter.q == 11)
-      //{
-        //frameCounter.d = 0; 
-      //} 
-    //} 
-      
-   //if(setStartFrame.q == 1)
-    //{
-      //setStartFrame.d = 3;      
-      //if(frameCounter.q == 1)
-      //{
-       // rgb0Counter.d = 0; //top left & notched
-       // rgb1Counter.d = 33;  //top right & notched
-       // rgb2Counter.d = 0; //top left & notched
-      //}
-      //if(frameCounter.q == 3)
-      //{
-        //rgb0Counter.d = 679; //bl
-        //rgb1Counter.d = 33;  //tr
-        //rgb2Counter.d = 679; //bl
-      //}      
-      //if(frameCounter.q == 10)
-      //{
-        //rgb0Counter.d = 679; //bl
-        //rgb1Counter.d = 33;  //tr
-        //rgb2Counter.d = 679; //bl
-      //}
-    //}   
-    
-    
+
     
     //-----------------------------FRAME 0 ----first Frame
     if(frameCounter.q == 0)
@@ -355,8 +318,7 @@ module fifo_buffer (
           {
             fifo.rget = 1;
             pixel.d = fifo.dout[23:0];
-            newPixelFlag.d = 1;            
-          
+            newPixelFlag.d = 1;      
         }
         
         if(newPixelFlag.q == 1)
@@ -444,7 +406,7 @@ module fifo_buffer (
     
     
          
-        //-----------------------------FRAME 1 ---------- .. tl,tr,tl,
+        //-----------------------------FRAME 1 ---------- .. tl,tr,tl,.. 3,4,5
       if(frameCounter.q == 1)
       {
           if (!fifo.empty && newPixelFlag.q == 0) 
@@ -490,9 +452,9 @@ module fifo_buffer (
             
             if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
             {
-              rgb0Counter.d = rgb0Counter.q + 1;
+              rgb2Counter.d = rgb2Counter.q + 1;
             }else{
-              rgb0Counter.d = rgb0Counter.q - 1;
+              rgb2Counter.d = rgb2Counter.q - 1;
             } 
           }
         }
@@ -523,7 +485,6 @@ module fifo_buffer (
         {
           rgb0.address = writePixelAddress3;
           rgb0Counter.d = writePixelAddress3;
-          //printSomething = 1;
           rgbOut3 = rgb0.read_data;
           
           rgb1.address = writePixelAddress4;
@@ -534,10 +495,105 @@ module fifo_buffer (
           rgb2Counter.d = writePixelAddress5;
           rgbOut5 = rgb2.read_data;        
         }
-            }
+      }
+    
     
 
+        
     
+      //-----------------------------FRAME 2 ---------- .... 6,7,8
+      if(frameCounter.q == 2)
+      {
+          if (!fifo.empty && newPixelFlag.q == 0) 
+          {
+            fifo.rget = 1;
+            pixel.d = fifo.dout[23:0];
+            newPixelFlag.d = 1;
+          } 
+
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            } 
+          }
+        }
+                      
+        if(newPixelFlag.q == 2)
+        {
+          newPixelFlag.d = 0;
+          columnCounter.d = columnCounter.q + 1;
+          pixelCounter.d = pixelCounter.q + 1;
+          if(columnCounter.q == 101)
+          {
+            rowCounter.d = rowCounter.q + 1;
+            columnCounter.d = 0;
+            rgb0Counter.d = rowStartPixel0;  //bottom left
+            rgb1Counter.d = rowStartPixel7;  //bottom right
+            rgb2Counter.d = rowStartPixel2;  //bottom left
+          }     
+        }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag2 = 1;
+          frame2Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;
+        }      
+        
+        if(frame2Write.q)
+        {
+          rgb0.address = writePixelAddress6;
+          rgb0Counter.d = writePixelAddress6;
+          rgbOut6 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress7;
+          rgb1Counter.d = writePixelAddress7;
+          rgbOut7 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress8;
+          rgb2Counter.d = writePixelAddress8;
+          rgbOut8 = rgb2.read_data;        
+        }
+      }
+    
+
+        
         //-----------------------------FRAME 3 ------- panels 9,10&11 
       if(frameCounter.q == 3)
       {
@@ -616,8 +672,6 @@ module fifo_buffer (
         {
           rgb0.address = writePixelAddress9;
           rgb0Counter.d = writePixelAddress9;
-          //printSomething = 1;
-          //postFifoPixelCount = writePixelAddress3;
           rgbOut9 = rgb0.read_data;
           
           rgb1.address = writePixelAddress10;
@@ -630,10 +684,106 @@ module fifo_buffer (
         }                 
       } 
         
-        
  
-            //-----------------------------FRAME 5 ------- panels 15,16,17
-      if(frameCounter.q == 3)
+    
+    
+        //-----------------------------FRAME 4 ----.... 12,13,14
+    if(frameCounter.q == 4)
+    { 
+       if (!fifo.empty && newPixelFlag.q == 0) 
+          {
+            fifo.rget = 1;
+            pixel.d = fifo.dout[23:0];
+            newPixelFlag.d = 1;      
+        }
+        
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            }
+          }
+        }   
+        
+        if(newPixelFlag.q == 2)
+          {
+            newPixelFlag.d = 0;
+            columnCounter.d = columnCounter.q + 1;
+            pixelCounter.d = pixelCounter.q + 1;
+            if(columnCounter.q == 101)
+            {
+              rowCounter.d = rowCounter.q + 1;
+              columnCounter.d = 0;
+              rgb0Counter.d = rowStartPixel0;
+              rgb1Counter.d = rowStartPixel1;
+              rgb2Counter.d = rowStartPixel2;
+            }     
+          }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag4 = 1;
+          frame4Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;  
+        }
+        
+        if(frame4Write.q == 1)
+        {
+          rgb0.address = writePixelAddress12;
+          rgb0Counter.d = writePixelAddress12;
+          rgbOut12 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress13;
+          rgb1Counter.d = writePixelAddress13;
+          rgbOut13 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress14;
+          rgb2Counter.d = writePixelAddress14;
+          rgbOut14 = rgb2.read_data;     
+        }        
+      }
+          
+     
+    
+    
+ 
+      //-----------------------------FRAME 5 ------- panels 15,16,17
+      if(frameCounter.q == 5)
       {
         if (!fifo.empty && newPixelFlag.q == 0) 
         {
@@ -710,8 +860,6 @@ module fifo_buffer (
         {
           rgb0.address = writePixelAddress15;
           rgb0Counter.d = writePixelAddress15;
-          //printSomething = 1;
-          //postFifoPixelCount = writePixelAddress3;
           rgbOut15 = rgb0.read_data;
           
           rgb1.address = writePixelAddress16;
@@ -724,8 +872,387 @@ module fifo_buffer (
         }                 
       } 
     
-       
+
     
+          //-----------------------------FRAME 6 ------- panels 18,19,20
+      if(frameCounter.q == 6)
+      {
+        if (!fifo.empty && newPixelFlag.q == 0) 
+        {
+          fifo.rget = 1;
+          pixel.d = fifo.dout[23:0];
+          newPixelFlag.d = 1;
+        }
+       
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            }
+          }
+        }
+                      
+        if(newPixelFlag.q == 2)
+        {
+          newPixelFlag.d = 0;
+          columnCounter.d = columnCounter.q + 1;
+          pixelCounter.d = pixelCounter.q + 1;
+          if(columnCounter.q == 101)
+          {
+            rowCounter.d = rowCounter.q + 1;
+            columnCounter.d = 0;
+            rgb0Counter.d = rowStartPixel3;
+            rgb1Counter.d = rowStartPixel4;
+            rgb2Counter.d = rowStartPixel5;
+          }     
+        }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag6 = 1;
+          frame6Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;
+        }    
+        if(frame6Write.q)
+        {
+          rgb0.address = writePixelAddress18;
+          rgb0Counter.d = writePixelAddress18;
+          rgbOut18 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress19;
+          rgb1Counter.d = writePixelAddress19;
+          rgbOut19 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress20;
+          rgb2Counter.d = writePixelAddress20;
+          rgbOut20 = rgb2.read_data;        
+        }                 
+      } 
+    
+
+    
+      //-----------------------------FRAME 7 ---------- .... 21,22,23
+      if(frameCounter.q == 7)
+      {
+          if (!fifo.empty && newPixelFlag.q == 0) 
+          {
+            fifo.rget = 1;
+            pixel.d = fifo.dout[23:0];
+            newPixelFlag.d = 1;
+          } 
+
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            } 
+          }
+        }
+                      
+        if(newPixelFlag.q == 2)
+        {
+          newPixelFlag.d = 0;
+          columnCounter.d = columnCounter.q + 1;
+          pixelCounter.d = pixelCounter.q + 1;
+          if(columnCounter.q == 101)
+          {
+            rowCounter.d = rowCounter.q + 1;
+            columnCounter.d = 0;
+            rgb0Counter.d = rowStartPixel0;  //bottom left
+            rgb1Counter.d = rowStartPixel7;  //bottom right
+            rgb2Counter.d = rowStartPixel0;  //bottom left
+          }     
+        }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag7 = 1;
+          frame7Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;
+        }      
+        
+        if(frame7Write.q)
+        {
+          rgb0.address = writePixelAddress21;
+          rgb0Counter.d = writePixelAddress21;
+          rgbOut21 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress22;
+          rgb1Counter.d = writePixelAddress22;
+          rgbOut22 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress23;
+          rgb2Counter.d = writePixelAddress23;
+          rgbOut23 = rgb2.read_data;        
+        }
+      }
+    
+    
+    
+               
+      //-----------------------------FRAME 8 ------- panels 24,25,26
+      if(frameCounter.q == 8)
+      {
+        if (!fifo.empty && newPixelFlag.q == 0) 
+        {
+          fifo.rget = 1;
+          pixel.d = fifo.dout[23:0];
+          newPixelFlag.d = 1;
+        }
+       
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            }
+          }
+        }
+                      
+        if(newPixelFlag.q == 2)
+        {
+          newPixelFlag.d = 0;
+          columnCounter.d = columnCounter.q + 1;
+          pixelCounter.d = pixelCounter.q + 1;
+          if(columnCounter.q == 101)
+          {
+            rowCounter.d = rowCounter.q + 1;
+            columnCounter.d = 0;
+            rgb0Counter.d = rowStartPixel0;
+            rgb1Counter.d = rowStartPixel1;
+            rgb2Counter.d = rowStartPixel2;
+          }     
+        }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag8 = 1;
+          frame8Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;
+        }    
+        if(frame8Write.q)
+        {
+          rgb0.address = writePixelAddress24;
+          rgb0Counter.d = writePixelAddress24;
+          rgbOut24 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress25;
+          rgb1Counter.d = writePixelAddress25;
+          rgbOut25 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress26;
+          rgb2Counter.d = writePixelAddress26;
+          rgbOut26 = rgb2.read_data;        
+        }                 
+      } 
+    
+    
+    
+ 
+    
+    
+       
+        //-----------------------------FRAME 9 ----.... 27,28,29
+    if(frameCounter.q == 9)
+    { 
+       if (!fifo.empty && newPixelFlag.q == 0) 
+          {
+            fifo.rget = 1;
+            pixel.d = fifo.dout[23:0];
+            newPixelFlag.d = 1;      
+        }
+        
+        if(newPixelFlag.q == 1)
+        {
+          newPixelFlag.d = 2;
+          
+          if(columnCounter.q < 34)
+          {
+            rgb0.write_data = pixel.q;
+            rgb0.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb0Counter.d = rgb0Counter.q - 1;
+            }else{
+              rgb0Counter.d = rgb0Counter.q + 1;
+            } 
+          }
+          if(columnCounter.q > 33 && columnCounter.q < 68)
+          {
+            rgb1.write_data = pixel.q;
+            rgb1.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb1Counter.d = rgb1Counter.q - 1;
+            }else{
+              rgb1Counter.d = rgb1Counter.q + 1;
+            }
+          }
+    
+          if(columnCounter.q > 67 && columnCounter.q < 102)
+          {
+            rgb2.write_data = pixel.q;
+            rgb2.write_en = 1;
+            
+            if(rowCounter.q[0])  //if first bit of 0-19 rows returns a 1(true) then even rows and we count up
+            {
+              rgb2Counter.d = rgb2Counter.q - 1;
+            }else{
+              rgb2Counter.d = rgb2Counter.q + 1;
+            }
+          }
+        }   
+        
+        if(newPixelFlag.q == 2)
+          {
+            newPixelFlag.d = 0;
+            columnCounter.d = columnCounter.q + 1;
+            pixelCounter.d = pixelCounter.q + 1;
+            if(columnCounter.q == 101)
+            {
+              rowCounter.d = rowCounter.q + 1;
+              columnCounter.d = 0;
+              rgb0Counter.d = rowStartPixel0;
+              rgb1Counter.d = rowStartPixel1;
+              rgb2Counter.d = rowStartPixel2;
+            }     
+          }
+        
+        if(pixelCounter.q == 2039) //all 3 panels captured in ram
+        {
+          startWritingFlag9 = 1;
+          frame9Write.d = 1;
+          pixelCounter.d = pixelCounter.q + 1;  
+        }
+        
+        if(frame9Write.q == 1)
+        {
+          rgb0.address = writePixelAddress27;
+          rgb0Counter.d = writePixelAddress27;
+          rgbOut27 = rgb0.read_data;
+          
+          rgb1.address = writePixelAddress28;
+          rgb1Counter.d = writePixelAddress28;
+          rgbOut28 = rgb1.read_data;
+          
+          rgb2.address = writePixelAddress29;
+          rgb2Counter.d = writePixelAddress29;
+          rgbOut29 = rgb2.read_data;     
+        }        
+      }
+          
+     
+ 
+    
+    
+       
+        
         //-----------------------------FRAME 10 ------- last frame
       if(frameCounter.q == 10)
       {
@@ -800,33 +1327,23 @@ module fifo_buffer (
           frame10Write.d = 1;
           pixelCounter.d = pixelCounter.q + 1;
         }          
-      }  
-      
-    
-    
-    
-    
+          if(frame10Write.q)
+          {
+            rgb0.address = writePixelAddress30;
+            rgb0Counter.d = writePixelAddress30;
+            rgbOut30 = rgb0.read_data;
+            
+            rgb1.address = writePixelAddress31;
+            rgb1Counter.d = writePixelAddress31;
+            rgbOut31 = rgb1.read_data;
+            
+            rgb2.address = writePixelAddress32;
+            rgb2Counter.d = writePixelAddress32;
+            rgbOut32 = rgb2.read_data;        
+          }    
+        } 
           
     
-    if(frame10Write.q)
-    {
-      rgb0.write_en = 0;
-      rgb1.write_en = 0;
-      rgb2.write_en = 0;
-      printSomething = 1;
-      postFifoPixelCount = rgb0.read_data;
-      rgb0.address = writePixelAddress30;
-      rgb0Counter.d = writePixelAddress30;
-      rgbOut30 = rgb0.read_data;
-      
-      rgb1.address = writePixelAddress31;
-      rgb1Counter.d = writePixelAddress31;
-      rgbOut31 = rgb1.read_data;
-      
-      rgb2.address = writePixelAddress32;
-      rgb2Counter.d = writePixelAddress32;
-      rgbOut32 = rgb2.read_data;        
-    }   
   
   }
 }

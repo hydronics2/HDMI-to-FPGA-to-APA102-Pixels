@@ -64,7 +64,6 @@ module panel_0 (
     {
       panelControl1.d = 3;
       ledStartBitCounter.d = 0;
-      //printSomething = 1;
     }
 
     if(panelControl1.q == 3)
