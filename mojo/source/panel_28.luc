@@ -1,0 +1,153 @@
+//frame 9.... 27,28,29
+
+//middle cut out.. all frames the same! even though BL, TR, BL...
+
+
+
+module panel_28 (
+
+    input clk,  // clock
+    input rst,
+
+    input spiBusySignal,
+    output newSpiData,
+    output ledByteOut[8],
+
+    output ramPixelAddress[10],
+
+    output idle,
+
+    input rgbIn[24],
+
+
+    input startWritingFlag,
+
+    output out
+
+  ) {
+
+  .clk(clk) {
+    .rst(rst) {
+      fsm state = {IDLE, WRITE}; // our state machine
+    }
+    dff ledStartBitCounter[4];
+    dff rgbCounter[4];
+
+    dff pixelAddress[10]; //
+
+    dff panelControl1[2];
+
+    dff rgbPixels[24];
+  }
+
+  always {
+    out = 0;
+    idle = 0;
+
+    newSpiData = 0;
+    ledByteOut = 0;
+    ramPixelAddress = 0;
+
+    rgbPixels.d[23:0] = rgbIn;
+
+    if(panelControl1.q == 0)
+    {
+      idle = 1;
+    }
+
+
+    if(startWritingFlag == 1)
+    {
+      panelControl1.d = 3;
+      ledStartBitCounter.d = 0;
+    }
+
+    if(panelControl1.q == 3)
+    {
+      state.d = state.WRITE;
+    }
+
+
+    case (state.q) { // our FSM
+      // IDLE: Reset everything and wait for HDMI panel#1 pixels.
+      state.IDLE:
+        out = 1;
+
+        // Write LEDs to strip
+      state.WRITE:
+
+        ramPixelAddress = pixelAddress.q;
+
+        if(ledStartBitCounter.q < 5 && !spiBusySignal)  //send atleast 32 0s first
+        {
+          ledByteOut = 8b0;
+          newSpiData = 1;
+          ledStartBitCounter.d = ledStartBitCounter.q + 1;
+
+          pixelAddress.d = 0; //start for panel 0
+
+          rgbCounter.d = 0;
+        }
+
+        if(ledStartBitCounter.q == 5) //1st led frame
+        {
+          if(pixelAddress.q > 680) //notched at bottom
+            rgbPixels.d = 0;
+
+          if(rgbCounter.q == 0 && !spiBusySignal)
+          {
+            ledByteOut = 8he3; //3 bits 1 and 5 bits brightness, tried E3, E5, 77
+            newSpiData = 1;
+            rgbCounter.d = 1;
+          }
+          if(rgbCounter.q == 1 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[23:16];
+            newSpiData = 1;
+            rgbCounter.d = 2;
+          }
+          if(rgbCounter.q == 2 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[15:8];
+            newSpiData = 1;
+            rgbCounter.d = 3;
+          }
+          if(rgbCounter.q == 3 && !spiBusySignal)
+          {
+            ledByteOut = rgbPixels.q[7:0];
+            newSpiData = 1;
+            rgbCounter.d = 4;
+          }
+
+          if(rgbCounter.q == 4) //wrote RG&B
+          {
+            pixelAddress.d = pixelAddress.q + 1;
+            rgbCounter.d = 5;
+
+          }
+          if(rgbCounter.q == 5) //get 1st pixel in next row
+          {
+            rgbCounter.d = 0;
+            if(pixelAddress.q == 272)
+              pixelAddress.d = 275;
+            if(pixelAddress.q == 303)
+              pixelAddress.d = 309;
+            if(pixelAddress.q == 337)
+              pixelAddress.d = 343;
+            if(pixelAddress.q == 371)
+              pixelAddress.d = 377;
+            if(pixelAddress.q == 405)
+              pixelAddress.d = 408;
+
+            if(pixelAddress.q == 690) //end if wrote 0-19 rows... was 690 added 15 onto 680
+            {
+              ledStartBitCounter.d = 11;
+              panelControl1.d = 0;
+              state.d = state.IDLE;
+            }
+          }
+        }
+
+      }
+  }
+}

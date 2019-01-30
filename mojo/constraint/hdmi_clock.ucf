@@ -1,0 +1,1 @@
+NET "hdmi2_tmds(3)" PERIOD = 80 MHz HIGH 50%;

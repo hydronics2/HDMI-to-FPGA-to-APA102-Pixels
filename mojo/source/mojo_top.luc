@@ -1,0 +1,769 @@
+//#4
+// sets display area of the HDMI screen to project to the APA102 led grid...
+// x from 40 to 448
+// y from 30 to 250
+
+//12/01/18 - in the fifo_buffer.. changing the pixelCounter.q == 2039 to 2040 got rid of some of the dots on the 3rd panels (the right side dots)
+
+
+
+//01/13/19 - printing 3 frames... last frame is glitch free.
+//01/13/19 -0113A -  frames 0 and 2 working pefectly... when 4 is not printing (could not replicate??)
+                  //-if frame 4 is printing... 0 and 2 are glitch and 4 is perfect
+//01/14/19 - 0113A.3 - frames 0,2,&4 writing at the same time more or less perfectly... a bit of fuz in frame 1 greatly enhanced with increased speed
+                      //also had to set all 3 writes to occur at the same time and messed with the spi clock delay thing.
+//01/14/19 - 0114A - adding the 6th frame seemed to freeze it
+
+//01/15/19 - 0114A.3 - added frames 1,3,5 under readWriteStage 1
+                    //- took out the idle if statement for the spi clock for the panels
+//01/15/19 - 0114A.2 - added frames 7
+                    //- took out the idle if statement for the spi clock for the panels
+//01/15/19 - 0114A.2 - premtively added row start values for all ram modules in start routine in fifo_buffer.
+//01/15/19 - 0114A.2 - fixed a few mistakes.. all rows printing well.. 1,3,5,7
+//01/15/19 - 0114A.4 - adding the readWRiteStage to the mojo_top seemed to help or the hole screen would blink
+//01/15/19 - 0114A.5 - trying to write readWriteStage.d = 1 which is frames 1,4,7,10.
+//01/15/19 - 0114A.5 - re-pasted the apa102_sck initiations below.. need to compile.
+
+
+//01/18/19 - 011719-stages - 20fps!, last two frames (9&10) are glitching slightly and panels 0,3,9,11 are missing their last pixels (top right)
+//01/19/19 - 011919-stages - updated the notched panels in all stages to print to 695 (+15 pixels) as a few panels were getting pixels left out as notched panels finished writing SPI reset_conditioner
+                          //- frames 9 and 10 still glitching
+                          //-increased hdmi_to_fifo pixel count for stage change to 75000 with no change.
+                          //-set all spi to clk 0 when idle, no change
+                          //- working... seems to compile differntly each time but this one shows no glitching on frames 9 & 10. saving as is
+
+
+
+//01/22/19 - 012219-stage1_save, - stage 1, frames 1,4,7,9 working perfectly
+                                  // - had to set the hdmi_to_fifo on the last frame (frame 9) perfectly to end at 20400. Likely extra pixels are living in the fifo.   
+                                  //if(pixelCounter.q > 18359 && pixelCounter.q < 20400) //was 20400
+
+//01/22/19 - 012219-stage0_save - stage 0 frames 0,3,5,10 working perfectly
+                                  // - had to set the hdmi_to_fifo on the last frame (frame 10) perfectly to end at 22441.
+
+//01/22/19 - 012219-stage1&0 - slight gitch on last frame (10) when added code together.
+
+//0123/19 - added frame 10 to stage2 and set pixelcounter to 20400. Does not glitch side to side... but does blink.
+            //took out the fifo=0 and seemed to work perfectly for all frames when stage 2 is playing alone.. frames 2,6,8,10
+
+//01/23/19 - all frames all 3 stages working perfectly 20fps. There is a tiny hesitation everyonce in awhile but hard to see
+
+
+// FPGA#1
+// ReadWriteStage 0 - frames 0,3,5,10
+//  Frame 0 - panels 0,1,2 
+//  Frame 3 - panels 9,10,11 
+//  Frame 5 - panels 15,16,17 
+
+
+// ReadWriteStage 1 - frmaes 1,4,7,9
+//  Frame 1 - panels 3,4,5 (notched bottom)
+//  Frame 4 - panels 12,13,14 (notched middle)
+//  Frame 7 - panels 21,22,23 (notched top)
+//  Frame 9 - panels 27,28,29 (notched middle)
+//  
+
+// ReadWriteStage 2 - frames 2,6,8, 10?
+//  Frame 2 - panels 6,7,8  (notched top)
+//  Frame 6 - panels 18,19,20 (notched bottom)
+//  Frmae 8 - panels 24,25,26 
+//  Frame 10 - panels 30,31,32 
+
+
+
+module mojo_top (
+    input clk,              // 50MHz clock
+    input rst_n,            // reset button (active low)
+    //output led [8],         // 8 user controllable LEDs
+    input cclk,             // configuration clock, AVR ready when high
+    output spi_miso,        // AVR SPI MISO
+    input spi_ss,           // AVR SPI Slave Select
+    input spi_mosi,         // AVR SPI MOSI
+    input spi_sck,          // AVR SPI Clock
+    output spi_channel [4], // AVR general purpose pins (used by default to select ADC channel)
+    input avr_tx,           // AVR TX (FPGA RX)
+    output avr_rx,          // AVR RX (FPGA TX)
+    input avr_rx_busy,       // AVR RX buffer full
+
+    input hdmi2_tmds [4],   // HDMI In
+    input hdmi2_tmdsb [4],
+    inout hdmi2_sda,        // EDID Interface
+    input hdmi2_scl,
+
+    //input globalReadWriteStageFlag[2],
+
+
+       //frame 0
+    output apa102_data0,
+    output apa102_data1,
+    output apa102_data2,
+
+       //frame 1
+    output apa102_data3,
+    output apa102_data4,
+    output apa102_data5,
+
+    //frame 2
+    output apa102_data6,
+    output apa102_data7,
+    output apa102_data8,
+
+       //frame 3
+    output apa102_data9,
+    output apa102_data10,
+    output apa102_data11,
+
+
+       //frame 4
+    output apa102_data12,
+    output apa102_data13,
+    output apa102_data14,
+
+       //frame 5
+    output apa102_data15,
+    output apa102_data16,
+    output apa102_data17,
+
+       //frame 6
+    output apa102_data18,
+    output apa102_data19,
+    output apa102_data20,
+
+    //frame 7
+    output apa102_data21,
+    output apa102_data22,
+    output apa102_data23,
+
+    //frame 8
+    output apa102_data24,
+    output apa102_data25,
+    output apa102_data26,
+
+    //frame 9
+    output apa102_data27,
+    output apa102_data28,
+    output apa102_data29,
+
+    //frame 0
+    output apa102_data30,
+    output apa102_data31,
+    output apa102_data32,
+
+    output apa102_sck
+
+
+  ) {
+
+  sig rst;  // reset signal
+
+  panelRows panelRows; //#1
+
+  hdmi_to_fifo hdmi_to_fifo(.rst(rst));
+
+  sig fclk; // 100MHz clock
+
+  // boost clock to 100MHz
+  clk_wiz_v3_6 clk_wiz;
+  always {
+    clk_wiz.CLK_IN1 = clk;   // 50MHz in
+    fclk = clk_wiz.CLK_OUT1; // 100MHz out (it's like magic!)
+  }
+
+  .clk(fclk) {
+
+        // The reset conditioner is used to synchronize the reset signal to the FPGA
+    // clock. This ensures the entire FPGA comes out of reset at the same time.
+    reset_conditioner reset_cond;
+
+    .rst(rst){
+
+       //frame 0
+    panel_0 panel_0;
+    panel_1 panel_1;
+    panel_2 panel_2;
+
+      //frame 1
+    panel_3 panel_3;
+    panel_4 panel_4;
+    panel_5 panel_5;
+
+      //frame 2
+    panel_6 panel_6;
+    panel_7 panel_7;
+    panel_8 panel_8;
+
+          //frame 3
+    panel_9 panel_9;
+    panel_10 panel_10;
+    panel_11 panel_11;
+
+        //frame 4
+    panel_12 panel_12;
+    panel_13 panel_13;
+    panel_14 panel_14;
+
+      //frame 5
+    panel_15 panel_15;
+    panel_16 panel_16;
+    panel_17 panel_17;
+
+      //frame 6
+    panel_18 panel_18;
+    panel_19 panel_19;
+    panel_20 panel_20;
+
+      //frame 7
+    panel_21 panel_21;
+    panel_22 panel_22;
+    panel_23 panel_23;
+
+    //frame 8
+    panel_24 panel_24;
+    panel_25 panel_25;
+    panel_26 panel_26;
+
+     //frame 9
+    panel_27 panel_27;
+    panel_28 panel_28;
+    panel_29 panel_29;
+
+    panel_30 panel_30;
+    panel_31 panel_31;
+    panel_32 panel_32;
+
+
+    spi_master0 spi_out0;
+    spi_master1 spi_out1;
+    spi_master2 spi_out2;
+
+    spi_master3 spi_out3;
+    spi_master4 spi_out4;
+    spi_master5 spi_out5;
+
+    spi_master6 spi_out6;
+    spi_master7 spi_out7;
+    spi_master8 spi_out8;
+
+    spi_master9 spi_out9;
+    spi_master10 spi_out10;
+    spi_master11 spi_out11;
+
+    spi_master12 spi_out12;
+    spi_master13 spi_out13;
+    spi_master14 spi_out14;
+
+    spi_master15 spi_out15;
+    spi_master16 spi_out16;
+    spi_master17 spi_out17;
+
+    spi_master18 spi_out18;
+    spi_master19 spi_out19;
+    spi_master20 spi_out20;
+
+    spi_master21 spi_out21;
+    spi_master22 spi_out22;
+    spi_master23 spi_out23;
+
+    spi_master24 spi_out24;
+    spi_master25 spi_out25;
+    spi_master26 spi_out26;
+
+    spi_master27 spi_out27;
+    spi_master28 spi_out28;
+    spi_master29 spi_out29;
+
+    spi_master30 spi_out30;
+    spi_master31 spi_out31;
+    spi_master32 spi_out32;
+      
+
+
+    fifo_buffer fifo_buffer;
+
+    avr_interface avr(#CLK_FREQ(100000000));
+
+    dff readWriteStage[3];  //up to 7
+
+    }
+    edid_rom edid (.rst(rst), .sda(hdmi2_sda), .scl(hdmi2_scl));
+  }
+
+  always {
+
+    // connect inputs of avr
+
+    reset_cond.in = ~rst_n; // input raw inverted reset signal
+    rst = reset_cond.out;   // conditioned reset
+
+
+    spi_miso = bz;          // not using SPI
+    spi_channel = bzzzz;    // not using flags
+    avr_rx = bz;            // not using serial port
+
+    avr.cclk = cclk;
+    avr.spi_ss = spi_ss;
+    avr.spi_mosi = spi_mosi;
+    avr.spi_sck = spi_sck;
+    avr.rx = avr_tx;
+    avr.channel = hf; // ADC is unused so disable
+    avr.tx_block = avr_rx_busy; // block TX when AVR is busy
+
+    // connect outputs of avr
+    spi_miso = avr.spi_miso;
+    spi_channel = avr.spi_channel;
+    avr_rx = avr.tx;
+    avr.new_tx_data = 0;
+    avr.tx_data = 0;
+
+
+    //avr.tx_data = fifo_buffer.postFifoPixelCount[23:16];
+    //avr.tx_data = hdmi_to_fifo.pixelNumber[15:8];
+    //avr.tx_data = fifo_buffer.postFifoPixelCount[7:0];
+    //avr.new_tx_data = panel_5.printSomething;
+    //avr.new_tx_data = panel_5.printSomething;
+    //panel_0.txBusy = avr.tx_busy;
+
+
+    fifo_buffer.hdmi_clk = hdmi_to_fifo.hdmiClk;
+    fifo_buffer.writeFifo = hdmi_to_fifo.writeFifo;
+
+    fifo_buffer.redIn = hdmi_to_fifo.redOut;
+    fifo_buffer.greenIn = hdmi_to_fifo.greenOut;
+    fifo_buffer.blueIn = hdmi_to_fifo.blueOut;
+
+    fifo_buffer.hdmi_vsyncFlag = hdmi_to_fifo.hdmi_vsyncFlag;
+
+    fifo_buffer.notWriting = panel_0.idle;
+
+     // connect HDMI input
+    hdmi_to_fifo.tmds = hdmi2_tmds;
+    hdmi_to_fifo.tmdsb = hdmi2_tmdsb;
+
+
+    //fifo_buffer.frameSyncFlag = hdmi_to_fifo.frameSyncFlag;
+
+    panelRows.currentFrame = fifo_buffer.currentFrame;
+
+
+    fifo_buffer.startPixel0 = panelRows.startPixel0;
+    fifo_buffer.startPixel1 = panelRows.startPixel1;
+    fifo_buffer.startPixel2 = panelRows.startPixel2;
+
+
+
+    fifo_buffer.writePixelAddress0 = panel_0.ramPixelAddress;
+    fifo_buffer.writePixelAddress1 = panel_1.ramPixelAddress;
+    fifo_buffer.writePixelAddress2 = panel_2.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress3 = panel_3.ramPixelAddress;
+    fifo_buffer.writePixelAddress4 = panel_4.ramPixelAddress;
+    fifo_buffer.writePixelAddress5 = panel_5.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress6 = panel_6.ramPixelAddress;
+    fifo_buffer.writePixelAddress7 = panel_7.ramPixelAddress;
+    fifo_buffer.writePixelAddress8 = panel_8.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress9 = panel_9.ramPixelAddress;
+    fifo_buffer.writePixelAddress10 = panel_10.ramPixelAddress;
+    fifo_buffer.writePixelAddress11 = panel_11.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress12 = panel_12.ramPixelAddress;
+    fifo_buffer.writePixelAddress13 = panel_13.ramPixelAddress;
+    fifo_buffer.writePixelAddress14 = panel_14.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress15 = panel_15.ramPixelAddress;
+    fifo_buffer.writePixelAddress16 = panel_16.ramPixelAddress;
+    fifo_buffer.writePixelAddress17 = panel_17.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress18 = panel_18.ramPixelAddress;
+    fifo_buffer.writePixelAddress19 = panel_19.ramPixelAddress;
+    fifo_buffer.writePixelAddress20 = panel_20.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress21 = panel_21.ramPixelAddress;
+    fifo_buffer.writePixelAddress22 = panel_22.ramPixelAddress;
+    fifo_buffer.writePixelAddress23 = panel_23.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress24 = panel_24.ramPixelAddress;
+    fifo_buffer.writePixelAddress25 = panel_25.ramPixelAddress;
+    fifo_buffer.writePixelAddress26 = panel_26.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress27 = panel_27.ramPixelAddress;
+    fifo_buffer.writePixelAddress28 = panel_28.ramPixelAddress;
+    fifo_buffer.writePixelAddress29 = panel_29.ramPixelAddress;
+
+    fifo_buffer.writePixelAddress30 = panel_30.ramPixelAddress;
+    fifo_buffer.writePixelAddress31 = panel_31.ramPixelAddress;
+    fifo_buffer.writePixelAddress32 = panel_32.ramPixelAddress;
+
+
+
+    panel_0.rgbIn = fifo_buffer.rgbOut0;
+    panel_1.rgbIn = fifo_buffer.rgbOut1;
+    panel_2.rgbIn = fifo_buffer.rgbOut2;
+
+    panel_3.rgbIn = fifo_buffer.rgbOut3;
+    panel_4.rgbIn = fifo_buffer.rgbOut4;
+    panel_5.rgbIn = fifo_buffer.rgbOut5;
+
+    panel_6.rgbIn = fifo_buffer.rgbOut6;
+    panel_7.rgbIn = fifo_buffer.rgbOut7;
+    panel_8.rgbIn = fifo_buffer.rgbOut8;
+
+    panel_9.rgbIn = fifo_buffer.rgbOut9;
+    panel_10.rgbIn = fifo_buffer.rgbOut10;
+    panel_11.rgbIn = fifo_buffer.rgbOut11;
+
+    panel_12.rgbIn = fifo_buffer.rgbOut12;
+    panel_13.rgbIn = fifo_buffer.rgbOut13;
+    panel_14.rgbIn = fifo_buffer.rgbOut14;
+
+    panel_15.rgbIn = fifo_buffer.rgbOut15;
+    panel_16.rgbIn = fifo_buffer.rgbOut16;
+    panel_17.rgbIn = fifo_buffer.rgbOut17;
+
+    panel_18.rgbIn = fifo_buffer.rgbOut18;
+    panel_19.rgbIn = fifo_buffer.rgbOut19;
+    panel_20.rgbIn = fifo_buffer.rgbOut20;
+
+    panel_21.rgbIn = fifo_buffer.rgbOut21;
+    panel_22.rgbIn = fifo_buffer.rgbOut22;
+    panel_23.rgbIn = fifo_buffer.rgbOut23;
+    panel_24.rgbIn = fifo_buffer.rgbOut24;
+    panel_25.rgbIn = fifo_buffer.rgbOut25;
+    panel_26.rgbIn = fifo_buffer.rgbOut26;
+
+    panel_27.rgbIn = fifo_buffer.rgbOut27;
+    panel_28.rgbIn = fifo_buffer.rgbOut28;
+    panel_29.rgbIn = fifo_buffer.rgbOut29;
+
+    panel_30.rgbIn = fifo_buffer.rgbOut30;
+    panel_31.rgbIn = fifo_buffer.rgbOut31;
+    panel_32.rgbIn = fifo_buffer.rgbOut32;
+
+    panelRows.address0 = fifo_buffer.rowPixelAddress;
+
+    fifo_buffer.rowStartPixel0 = panelRows.rowPixelPanel0;
+    fifo_buffer.rowStartPixel1 = panelRows.rowPixelPanel1;
+    fifo_buffer.rowStartPixel2 = panelRows.rowPixelPanel2;
+
+    fifo_buffer.rowStartPixel3 = panelRows.rowPixelPanel3;
+    fifo_buffer.rowStartPixel4 = panelRows.rowPixelPanel4;
+    fifo_buffer.rowStartPixel5 = panelRows.rowPixelPanel5;
+
+    fifo_buffer.rowStartPixel7 = panelRows.rowPixelPanel7; //bottom right
+
+
+    panel_0.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_1.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_2.startWritingFlag = fifo_buffer.startWritingFlag;
+    panel_3.startWritingFlag = fifo_buffer.startWritingFlag1;
+    panel_4.startWritingFlag = fifo_buffer.startWritingFlag1;
+    panel_5.startWritingFlag = fifo_buffer.startWritingFlag1;
+    panel_6.startWritingFlag = fifo_buffer.startWritingFlag2;
+    panel_7.startWritingFlag = fifo_buffer.startWritingFlag2;
+    panel_8.startWritingFlag = fifo_buffer.startWritingFlag2;
+
+    panel_9.startWritingFlag = fifo_buffer.startWritingFlag3;
+    panel_10.startWritingFlag = fifo_buffer.startWritingFlag3;
+    panel_11.startWritingFlag = fifo_buffer.startWritingFlag3;
+
+    panel_12.startWritingFlag = fifo_buffer.startWritingFlag4;
+    panel_13.startWritingFlag = fifo_buffer.startWritingFlag4;
+    panel_14.startWritingFlag = fifo_buffer.startWritingFlag4;
+    panel_15.startWritingFlag = fifo_buffer.startWritingFlag5;
+    panel_16.startWritingFlag = fifo_buffer.startWritingFlag5;
+    panel_17.startWritingFlag = fifo_buffer.startWritingFlag5;
+    panel_18.startWritingFlag = fifo_buffer.startWritingFlag6;
+    panel_19.startWritingFlag = fifo_buffer.startWritingFlag6;
+    panel_20.startWritingFlag = fifo_buffer.startWritingFlag6;
+    panel_21.startWritingFlag = fifo_buffer.startWritingFlag7;
+    panel_22.startWritingFlag = fifo_buffer.startWritingFlag7;
+    panel_23.startWritingFlag = fifo_buffer.startWritingFlag7;
+    panel_24.startWritingFlag = fifo_buffer.startWritingFlag8;
+    panel_25.startWritingFlag = fifo_buffer.startWritingFlag8;
+    panel_26.startWritingFlag = fifo_buffer.startWritingFlag8;
+    panel_27.startWritingFlag = fifo_buffer.startWritingFlag9;
+    panel_28.startWritingFlag = fifo_buffer.startWritingFlag9;
+    panel_29.startWritingFlag = fifo_buffer.startWritingFlag9;
+
+    panel_30.startWritingFlag = fifo_buffer.startWritingFlag10;
+    panel_31.startWritingFlag = fifo_buffer.startWritingFlag10;
+    panel_32.startWritingFlag = fifo_buffer.startWritingFlag10;
+
+    spi_out0.data_in = panel_0.ledByteOut;
+    spi_out0.start = panel_0.newSpiData;
+    panel_0.spiBusySignal = spi_out0.busy;
+
+    spi_out1.data_in = panel_1.ledByteOut;
+    spi_out1.start = panel_1.newSpiData;
+    panel_1.spiBusySignal = spi_out1.busy;
+
+    spi_out2.data_in = panel_2.ledByteOut;
+    spi_out2.start = panel_2.newSpiData;
+    panel_2.spiBusySignal = spi_out2.busy;
+
+    spi_out3.data_in = panel_3.ledByteOut;
+    spi_out3.start = panel_3.newSpiData;
+    panel_3.spiBusySignal = spi_out3.busy;
+
+    spi_out4.data_in = panel_4.ledByteOut;
+    spi_out4.start = panel_4.newSpiData;
+    panel_4.spiBusySignal = spi_out4.busy;
+
+    spi_out5.data_in = panel_5.ledByteOut;
+    spi_out5.start = panel_5.newSpiData;
+    panel_5.spiBusySignal = spi_out5.busy;
+
+    spi_out6.data_in = panel_6.ledByteOut;
+    spi_out6.start = panel_6.newSpiData;
+    panel_6.spiBusySignal = spi_out6.busy;
+
+    spi_out7.data_in = panel_7.ledByteOut;
+    spi_out7.start = panel_7.newSpiData;
+    panel_7.spiBusySignal = spi_out7.busy;
+
+    spi_out8.data_in = panel_8.ledByteOut;
+    spi_out8.start = panel_8.newSpiData;
+    panel_8.spiBusySignal = spi_out8.busy;
+
+    spi_out9.data_in = panel_9.ledByteOut;
+    spi_out9.start = panel_9.newSpiData;
+    panel_9.spiBusySignal = spi_out9.busy;
+
+    spi_out10.data_in = panel_10.ledByteOut;
+    spi_out10.start = panel_10.newSpiData;
+    panel_10.spiBusySignal = spi_out10.busy;
+
+    spi_out11.data_in = panel_11.ledByteOut;
+    spi_out11.start = panel_11.newSpiData;
+    panel_11.spiBusySignal = spi_out11.busy;
+
+    spi_out12.data_in = panel_12.ledByteOut;
+    spi_out12.start = panel_12.newSpiData;
+    panel_12.spiBusySignal = spi_out12.busy;
+
+    spi_out13.data_in = panel_13.ledByteOut;
+    spi_out13.start = panel_13.newSpiData;
+    panel_13.spiBusySignal = spi_out13.busy;
+
+    spi_out14.data_in = panel_14.ledByteOut;
+    spi_out14.start = panel_14.newSpiData;
+    panel_14.spiBusySignal = spi_out14.busy;
+
+    spi_out15.data_in = panel_15.ledByteOut;
+    spi_out15.start = panel_15.newSpiData;
+    panel_15.spiBusySignal = spi_out15.busy;
+
+    spi_out16.data_in = panel_16.ledByteOut;
+    spi_out16.start = panel_16.newSpiData;
+    panel_16.spiBusySignal = spi_out16.busy;
+
+    spi_out17.data_in = panel_17.ledByteOut;
+    spi_out17.start = panel_17.newSpiData;
+    panel_17.spiBusySignal = spi_out17.busy;
+
+    spi_out18.data_in = panel_18.ledByteOut;
+    spi_out18.start = panel_18.newSpiData;
+    panel_18.spiBusySignal = spi_out18.busy;
+
+    spi_out19.data_in = panel_19.ledByteOut;
+    spi_out19.start = panel_19.newSpiData;
+    panel_19.spiBusySignal = spi_out19.busy;
+
+    spi_out20.data_in = panel_20.ledByteOut;
+    spi_out20.start = panel_20.newSpiData;
+    panel_20.spiBusySignal = spi_out20.busy;
+
+    spi_out21.data_in = panel_21.ledByteOut;
+    spi_out21.start = panel_21.newSpiData;
+    panel_21.spiBusySignal = spi_out21.busy;
+
+    spi_out22.data_in = panel_22.ledByteOut;
+    spi_out22.start = panel_22.newSpiData;
+    panel_22.spiBusySignal = spi_out22.busy;
+
+    spi_out23.data_in = panel_23.ledByteOut;
+    spi_out23.start = panel_23.newSpiData;
+    panel_23.spiBusySignal = spi_out23.busy;
+
+    spi_out24.data_in = panel_24.ledByteOut;
+    spi_out24.start = panel_24.newSpiData;
+    panel_24.spiBusySignal = spi_out24.busy;
+
+    spi_out25.data_in = panel_25.ledByteOut;
+    spi_out25.start = panel_25.newSpiData;
+    panel_25.spiBusySignal = spi_out25.busy;
+
+    spi_out26.data_in = panel_26.ledByteOut;
+    spi_out26.start = panel_26.newSpiData;
+    panel_26.spiBusySignal = spi_out26.busy;
+
+    spi_out27.data_in = panel_27.ledByteOut;
+    spi_out27.start = panel_27.newSpiData;
+    panel_27.spiBusySignal = spi_out27.busy;
+
+    spi_out28.data_in = panel_28.ledByteOut;
+    spi_out28.start = panel_28.newSpiData;
+    panel_28.spiBusySignal = spi_out28.busy;
+
+    spi_out29.data_in = panel_29.ledByteOut;
+    spi_out29.start = panel_29.newSpiData;
+    panel_29.spiBusySignal = spi_out29.busy;
+
+    spi_out30.data_in = panel_30.ledByteOut;
+    spi_out30.start = panel_30.newSpiData;
+    panel_30.spiBusySignal = spi_out30.busy;
+
+    spi_out31.data_in = panel_31.ledByteOut;
+    spi_out31.start = panel_31.newSpiData;
+    panel_31.spiBusySignal = spi_out31.busy;
+
+    spi_out32.data_in = panel_32.ledByteOut;
+    spi_out32.start = panel_32.newSpiData;
+    panel_32.spiBusySignal = spi_out32.busy;
+
+
+    spi_out0.miso = 1b0;
+    spi_out1.miso = 1b0;
+    spi_out2.miso = 1b0;
+
+    spi_out3.miso = 1b0;
+    spi_out4.miso = 1b0;
+    spi_out5.miso = 1b0;
+    spi_out6.miso = 1b0;
+    spi_out7.miso = 1b0;
+    spi_out8.miso = 1b0;
+    spi_out9.miso = 1b0;
+    spi_out10.miso = 1b0;
+    spi_out11.miso = 1b0;
+    spi_out12.miso = 1b0;
+    spi_out13.miso = 1b0;
+    spi_out14.miso = 1b0;
+    spi_out15.miso = 1b0;
+    spi_out16.miso = 1b0;
+    spi_out17.miso = 1b0;
+    spi_out18.miso = 1b0;
+    spi_out19.miso = 1b0;
+    spi_out20.miso = 1b0;
+    spi_out21.miso = 1b0;
+    spi_out22.miso = 1b0;
+    spi_out23.miso = 1b0;
+    spi_out24.miso = 1b0;
+    spi_out25.miso = 1b0;
+    spi_out26.miso = 1b0;
+    spi_out27.miso = 1b0;
+    spi_out28.miso = 1b0;
+    spi_out29.miso = 1b0;
+
+    spi_out30.miso = 1b0;
+    spi_out31.miso = 1b0;
+    spi_out32.miso = 1b0;
+
+    apa102_data0 = spi_out0.mosi;
+    apa102_data1 = spi_out1.mosi;
+    apa102_data2 = spi_out2.mosi;
+
+    apa102_data3 = spi_out3.mosi;
+    apa102_data4 = spi_out4.mosi;
+    apa102_data5 = spi_out5.mosi;
+    apa102_data6 = spi_out6.mosi;
+    apa102_data7 = spi_out7.mosi;
+    apa102_data8 = spi_out8.mosi;
+    apa102_data9 = spi_out9.mosi;
+    apa102_data10 = spi_out10.mosi;
+    apa102_data11 = spi_out11.mosi;
+    apa102_data12 = spi_out12.mosi;
+    apa102_data13 = spi_out13.mosi;
+    apa102_data14 = spi_out14.mosi;
+    apa102_data15 = spi_out15.mosi;
+    apa102_data16 = spi_out16.mosi;
+    apa102_data17 = spi_out17.mosi;
+    apa102_data18 = spi_out18.mosi;
+    apa102_data19 = spi_out19.mosi;
+    apa102_data20 = spi_out20.mosi;
+    apa102_data21 = spi_out21.mosi;
+    apa102_data22 = spi_out22.mosi;
+    apa102_data23 = spi_out23.mosi;
+    apa102_data24 = spi_out24.mosi;
+    apa102_data25 = spi_out25.mosi;
+    apa102_data26 = spi_out26.mosi;
+    apa102_data27 = spi_out27.mosi;
+    apa102_data28 = spi_out28.mosi;
+    apa102_data29 = spi_out29.mosi;
+
+    apa102_data31 = spi_out31.mosi;
+    apa102_data32 = spi_out32.mosi;
+    apa102_data30 = spi_out30.mosi;
+
+
+    fifo_buffer.globalReadWriteStageFlag = hdmi_to_fifo.globalReadWriteStageFlag;
+    
+    readWriteStage.d = hdmi_to_fifo.globalReadWriteStageFlag;
+
+    apa102_sck = bx;
+    
+    //apa102_sck = spi_master_clk.sck; //this did not work!
+
+    if(readWriteStage.q == 0) //frames 0,3,5,10
+    {
+      apa102_sck = spi_out0.sck;
+      apa102_sck = spi_out1.sck;
+      apa102_sck = spi_out2.sck;
+
+      apa102_sck = spi_out9.sck;
+      apa102_sck = spi_out10.sck;
+      apa102_sck = spi_out11.sck;
+
+      apa102_sck = spi_out15.sck;
+      apa102_sck = spi_out16.sck;
+      apa102_sck = spi_out17.sck;
+    }
+
+    if(readWriteStage.q == 1) //frames 1,4,7,9
+    {
+
+      apa102_sck = spi_out3.sck;
+      apa102_sck = spi_out4.sck;
+      apa102_sck = spi_out5.sck;
+
+      apa102_sck = spi_out12.sck;
+      apa102_sck = spi_out13.sck;
+      apa102_sck = spi_out14.sck;
+
+      apa102_sck = spi_out21.sck;
+      apa102_sck = spi_out22.sck;
+      apa102_sck = spi_out23.sck;
+
+      apa102_sck = spi_out27.sck;
+      apa102_sck = spi_out28.sck;
+      apa102_sck = spi_out29.sck;
+    }
+
+    if(readWriteStage.q == 2) //frames 2,6,8,10
+    {
+      apa102_sck = spi_out6.sck;
+      apa102_sck = spi_out7.sck;
+      apa102_sck = spi_out8.sck;
+
+      apa102_sck = spi_out18.sck;
+      apa102_sck = spi_out19.sck;
+      apa102_sck = spi_out20.sck;
+
+      apa102_sck = spi_out24.sck;
+      apa102_sck = spi_out25.sck;
+      apa102_sck = spi_out26.sck;
+
+      apa102_sck = spi_out30.sck;
+      apa102_sck = spi_out31.sck;
+      apa102_sck = spi_out32.sck;            
+    }
+    
+    if(readWriteStage.q == 3) //frames 10
+    {
+      apa102_sck = spi_out30.sck;
+      apa102_sck = spi_out31.sck;
+      apa102_sck = spi_out32.sck;
+    }  
+   
+  }
+}

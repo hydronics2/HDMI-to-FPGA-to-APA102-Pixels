@@ -1,0 +1,257 @@
+//notes
+//
+//    12/1/18.
+//    - going
+
+
+module hdmi_to_fifo (
+
+    input rst,  // reset
+
+    input tmds[4],
+    input tmdsb[4],
+
+    output printSomething,
+
+    output redOut[8],
+    output greenOut[8],
+    output blueOut[8],
+    output writeFifo,
+    output hdmiClk,
+
+    output hdmi_vsyncFlag,
+
+    output pixelNumber[24],
+
+    output globalReadWriteStageFlag[2],
+
+    output out
+  ) {
+
+  //start reading pixels at location 40,30 (x,y) on HDMI screen 1280 x 768
+
+  // X_START.
+  //Section1: 40
+  //Section2: 40+102=> 142
+  //Section3: 40+204=> 244
+  //Section4: 40+306=> 346
+
+  const X_START = 40; //
+  const Y_START = 30; //
+
+  const X_LENGTH = 102; //34 pixels wide times 3 => 102
+  const Y_LENGTH = 220; //20 pixels tall x 11 => 220
+
+
+
+  dvi_decoder hdmi_in (.rst(rst));
+
+  .clk(hdmi_in.pclk) {  //this is the clock speed inherited from the HDMI... not sure how fast it is?
+
+    dff x_ctr[11]; //11 bit is 2047
+    dff y_ctr[11]; //11 bit is 2047
+
+    dff xAxis[8]; //count 101 pixels wide per row of 3 panels
+
+    dff pixelCounter[24]; //20,433 pixels
+    dff frameCounter[4];
+
+    dff readWriteStage[3];  //up to 7
+  }
+
+  always {
+  out = 0;
+  redOut = 0;
+  greenOut = 0;
+  blueOut = 0;
+  writeFifo = 0;
+
+  pixelNumber = pixelCounter.q;
+  printSomething = 0;
+
+  hdmi_vsyncFlag = 0;
+
+  hdmiClk = hdmi_in.pclk;
+
+  hdmi_in.tmds = tmds;
+  hdmi_in.tmdsb = tmdsb;
+
+  redOut = hdmi_in.red;
+  greenOut = hdmi_in.green;
+  blueOut = hdmi_in.blue;
+
+  globalReadWriteStageFlag = readWriteStage.q;
+    
+  if (hdmi_in.vsync) {
+    x_ctr.d = 0;
+    y_ctr.d = 0;
+    pixelCounter.d = 0;
+    hdmi_vsyncFlag = 1;
+  }
+
+  if(hdmi_in.hsync) //new horizontal line
+    x_ctr.d = 0;
+
+  if (hdmi_in.de)  //active pixel region, we can count horizontal pixels here
+    x_ctr.d = x_ctr.q + 1;
+
+  if(x_ctr.q == 1 && hdmi_in.de) //increments vertical line counter... arbitrary set after reaching 1st pixel... using hsync didn't work(?) so this was the fix
+    y_ctr.d = y_ctr.q + 1;
+
+
+  //panel 0
+  if(x_ctr.q >= X_START && y_ctr.q >= Y_START && hdmi_in.de) // active area.... anytime we're 40 pixels across and 30 pixels down
+  {
+    if(xAxis.q < X_LENGTH) //as long as we haven't exceeded 220 pixels wide, we're in our active area
+    {
+      xAxis.d = xAxis.q + 1;
+      pixelCounter.d = pixelCounter.q + 1;  //keeping track of total pixels
+        
+
+      //------------------------------------------------------- STAGE 1 --------------------
+      if(readWriteStage.q == 0)  //stage 0 is frames 0,3,5
+      {
+        if(frameCounter.q == 0)
+        {
+          if(pixelCounter.q < 2040)  //2040 is 1 frame of pixels (3 panels)
+            writeFifo = 1;
+        }
+
+        if(pixelCounter.q > 6000 && pixelCounter.q < 8160)
+          frameCounter.d = 3;
+        if(frameCounter.q == 3)
+        {
+          if(pixelCounter.q > 6119 && pixelCounter.q < 8160)
+            writeFifo = 1;
+        }
+
+        if(pixelCounter.q > 10000 && pixelCounter.q < 12240)
+          frameCounter.d = 5;
+        if(frameCounter.q == 5)
+        {
+          if(pixelCounter.q > 10199 && pixelCounter.q < 12240)
+            writeFifo = 1;
+        }  
+      }
+
+     //------------------------------------------------------- STAGE 1 --------------------
+      if(readWriteStage.q == 1) //stage 1 is frames 1,4,7,9
+      {
+        if(frameCounter.q == 1)
+        {
+          if(pixelCounter.q > 2039 && pixelCounter.q < 4080)
+            writeFifo = 1;
+        }
+
+        if(pixelCounter.q > 8000 && pixelCounter.q < 10200)
+          frameCounter.d = 4;
+        if(frameCounter.q == 4)
+        {
+          if(pixelCounter.q > 8159 && pixelCounter.q < 10200)
+            writeFifo = 1;
+         }
+
+        if(pixelCounter.q > 14200 && pixelCounter.q < 16320)
+          frameCounter.d = 7;
+        if(frameCounter.q == 7)
+        {
+          if(pixelCounter.q > 14279 && pixelCounter.q < 16320)
+            writeFifo = 1;
+        }
+          
+        if(pixelCounter.q > 18000 && pixelCounter.q < 20400)//was 20400
+          frameCounter.d = 9;
+        if(frameCounter.q == 9)
+        {
+          if(pixelCounter.q > 18359 && pixelCounter.q < 20400) //was 20400
+            writeFifo = 1;
+        }        
+      }
+
+        
+       //---------------------------------------------------------- STAGE 2 --------------------
+      if(readWriteStage.q == 2) //stage 2 is frames 2,6,8,10
+      {
+        if(pixelCounter.q > 4000 && pixelCounter.q < 6120)
+          frameCounter.d = 2;
+        if(frameCounter.q == 2)
+        {
+          if(pixelCounter.q > 4079 && pixelCounter.q < 6120)
+            writeFifo = 1;
+        }
+        
+          if(pixelCounter.q > 12000 && pixelCounter.q < 14280)
+          frameCounter.d = 6;
+        if(frameCounter.q == 6)
+        {
+          if(pixelCounter.q > 12239 && pixelCounter.q < 14280)
+            writeFifo = 1;
+        }          
+
+        if(pixelCounter.q > 16300 && pixelCounter.q < 18360)
+          frameCounter.d = 8;
+        if(frameCounter.q == 8)
+        {
+          if(pixelCounter.q > 16319 && pixelCounter.q < 18360)
+            writeFifo = 1;
+        }
+          
+        if(pixelCounter.q > 20300 && pixelCounter.q < 22440) 
+          frameCounter.d = 10;
+        if(frameCounter.q == 10)
+        {
+          if(pixelCounter.q > 20399 && pixelCounter.q < 22440)
+            writeFifo = 1;
+        }   
+      }//end stage 2
+         
+      
+      //---------------------------------------------------------- STAGE 3 --------------------
+      if(readWriteStage.q == 3) //stage 3 is frames 10
+      {
+        //if(pixelCounter.q > 20300 && pixelCounter.q < 22441) 
+          //frameCounter.d = 10;
+        if(frameCounter.q == 10)
+        {
+          if(pixelCounter.q > 20399 && pixelCounter.q < 22440)
+            writeFifo = 1;
+        }   
+      }//end stage 3
+    }
+    } //end pixel counting
+
+    if(pixelCounter.q == 75000)
+    {
+      readWriteStage.d = readWriteStage.q + 1;
+      //readWriteStage.d = 2;
+      pixelCounter.d = pixelCounter.q + 1;
+      //printSomething = 1;
+    }
+    if(pixelCounter.q > 75000)
+    {
+      if(readWriteStage.q == 3)
+      {
+        readWriteStage.d = 0;
+      }      
+      if(readWriteStage.q == 0) //stage 0 starts with frame 0
+      {
+        frameCounter.d = 0;
+      }
+      if(readWriteStage.q == 1) //stage 1 starts with frame 1
+      {
+        frameCounter.d = 1;
+      }
+      if(readWriteStage.q == 2) //stage 2 starts with frame 2
+      {
+        frameCounter.d = 2;
+      }
+      ///if(readWriteStage.q == 3) //stage 2 starts with frame 2
+      //{
+        //frameCounter.d = 10;
+      //}      
+      globalReadWriteStageFlag = readWriteStage.q;
+    }
+    if(!hdmi_in.de)  //out of bounds
+      xAxis.d = 0;
+  }
+}
