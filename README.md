@@ -15,7 +15,13 @@ The FPGA's boards are Spartan 6 on a Mojo development platform: https://alchitry
 Alchitry has an HDMI shield for the Mojo and the FPGA code is written in their programming environment in Lucid a form Verilog. It's great for beginners. This was my first FPGA project.
 
 ![overview](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/FPGA_overview2.JPG)
-Once the HDMI signal is decoded and pixels arranged for each panel, the FPGA sends out an SPI clock and data signal to each panel of APA102's. The signal is imediatly fed into an RS485 transmitter so that the signals can be routed in differential pairs over 20-30 feet to where the panel resides. Once transmitted to the location of the LED panel, the signals are received with transceiver chips into clock and data lines and connected to thier respective LED panel. 
+The HDMI signal is decoded and pixels arranged for each panel in local memory (RAM). There is just enough memory to save about 30% of the pixels so it takes 3 passes to arrange and output all the pixels... 60HZ / 3 gives us 20 frames per second.  
+
+The SPI clock for the APA102 is also limits our write speed.  Here's a great article by Paul Stoffregen (teensy) on trying to write fast to APA102 pixels in long strips: https://www.pjrc.com/why-apa102-leds-have-trouble-at-24-mhz/
+The gist is the clock signals start to deteriorate between the pixels. For our 680 pixels in each stand/panel I was able to write confidently at about 6.25 MHZ. You can see how this clock signal is generated in any one of the 32 SPI moduels in the source file under Mojo.
+
+![rs485_transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/RS_485%20trasmitter2.JPG)
+The FPGA generates an SPI clock and data signal to each LED panel. The signals are immediatly fed from a simple shield to another custsom PCB with [RS485 transmitters](https://www.digikey.com/product-detail/en/texas-instruments/AM26LV31EIDR/296-24690-1-ND/2092512) shown above. . so that the signals can be routed in differential pairs over 20-30 feet to where the panel resides. Once transmitted to the location of the LED panel, the signals are received with transceiver chips into clock and data lines and connected to thier respective LED panel. 
 
 Mojo HDMI Shield: https://embeddedmicro.com/products/hdmi-shield
 
