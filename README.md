@@ -28,6 +28,7 @@ The FPGA generates an SPI clock and data signal to each LED panel. The signals a
 
 
 The led panels themselves are little more than strip LEDs taht have been connected together.  We had them customized for our particular geometry by the [supplier](https://www.aliexpress.com/store/product/30-40-pixels-RGB-full-color-WS2812B-Flexible-LED-Pixel-Panel-Light-DC5V/701799_32601735218.html).
+![sample](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/example_led_panel.JPG)
 
 
 Mojo HDMI Shield: https://embeddedmicro.com/products/hdmi-shield
