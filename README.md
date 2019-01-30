@@ -17,7 +17,7 @@ Alchitry has an HDMI shield for the Mojo and the FPGA code is written in their p
 ![overview](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/FPGA_overview2.JPG)
 The HDMI signal is decoded and pixels arranged for each panel in local memory (RAM). There is just enough memory to save about 30% of the pixels so it takes 3 passes to arrange and output all the pixels... 60HZ / 3 gives us 20 frames per second.  
 
-The SPI clock for the APA102 is also limits our write speed.  Here's a great article by Paul Stoffregen (teensy) on trying to write fast to APA102 pixels in long strips: https://www.pjrc.com/why-apa102-leds-have-trouble-at-24-mhz/
+The SPI clock for the APA102 is also limits our write speed.  Here's a great article by [Paul Stoffregen (teensy)](https://www.pjrc.com/why-apa102-leds-have-trouble-at-24-mhz/) on trying to write fast to APA102 pixels in long strips. 
 The gist is the clock signals start to deteriorate between the pixels. For our 680 pixels in each stand/panel I was able to write confidently at about 6.25 MHZ. You can see how this clock signal is generated in any one of the 32 SPI moduels in the source file under Mojo.
 
 ![rs485_transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/RS_485%20trasmitter2.JPG)
