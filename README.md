@@ -36,3 +36,8 @@ Mojo HDMI Shield: https://embeddedmicro.com/products/hdmi-shield
 
 This design builds off of a lucid module example for decoding HDMI signals: https://embeddedmicro.com/blogs/tutorials/hdmi-shield-basics
 
+![exposed](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/led_wall_exposed.JPG)
+
+Thanks to Walsh Construction for making it look easy to hang giant pieces of Acrylic exactly on target.
+
+
