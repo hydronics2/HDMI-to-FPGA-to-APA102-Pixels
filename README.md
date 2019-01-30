@@ -1,4 +1,8 @@
-# mojo_fpga
+# Oregon Museum of Science (OMSI) - giant LED wall
+
+![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/splash.JPG)
+
+
 
 This design takes an HDMI signal and outputs a 34 long x 20 high grid of APA102 leds.
 
