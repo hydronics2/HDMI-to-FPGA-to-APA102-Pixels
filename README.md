@@ -13,7 +13,7 @@ The resolution is about 24' wide by 14' high. That's 408 pixels wide 220 pixels 
 The FPGA's boards are Spartan 6 on a Mojo development platform: https://alchitry.com/ The wall is broken down into 4 sections for 4 Mojo's and each Mojo receives the same HDMI signal but only grabs pixels for the section of LEDs it controls. 
 
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/hdmi_shield.JPG)
-Alchitry has an HDMI shield for the Mojo and the FPGA code is written in their programming environment in Lucid a form Verilog. It's great for beginners. This was my first FPGA project.
+Alchitry has an HDMI shield for the Mojo and the FPGA code is written in their programming environment in Lucid a form of Verilog. It's great for beginners. This was my first FPGA project.
 
 ![overview](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/FPGA_overview2.JPG)
 
