@@ -5,12 +5,24 @@ We used 3 types of circuit boards.
 * A transmitter board that sends the clock and data signal out over RS485*
 * A receiver board that has transceiver chips, takes the signals *
 
-
+![shield](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/mojo_shield.png)
+Mojo Shield has all the pins broken out. We needed 33 SPI Data pins and the clock pin was shared across all the Panels.  The pins are broken out to 5.08mm phoenix connectors. The HDMI shield fits on the Mojo and this shield connects ontop of the HDMI shield. [Oshpark](https://oshpark.com/shared_projects/AGi8q5pp)
 
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/hdmi_shield.JPG)
-Alchitry has an HDMI shield for the Mojo and the FPGA code is written in their programming environment in Lucid a form Verilog. It's great for beginners. This was my first FPGA project.
 
-![overview](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/FPGA_overview2.JPG)
+[Mojo Development Board](https://alchitry.com/products/mojo-v3)
+
+[HDMI Shield](https://alchitry.com/products/hdmi-shield)
+
+
+![transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS485_transmitter_board.png)
+
+The transmitter board that takes two SPI signals (Clock and Data), passes the signals through a RS485 transmitter chip. The differential signals are routed to an ethernet jack. This board could have been integrated into the Mojo shield to reduce noise but my disigning, programming, prototyping, and installing timelines compressed the schedule and I had to learn as I went. [Oshpark](https://oshpark.com/shared_projects/nhExJAWv)
+
+*transmitter chip: Texas Instrument AM27LV31 296-24690-1-ND*
+*RJ45 ethernet jack: 380-1316-5-ND*
+
+https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels
 
 The HDMI signal is decoded and pixels arranged for each panel in local memory (RAM). There is just enough memory to save about 30% of the pixels so it takes 3 passes to arrange and output all the pixels... 60HZ / 3 gives us 20 frames per second.
 
