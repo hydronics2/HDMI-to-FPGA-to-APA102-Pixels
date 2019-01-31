@@ -2,7 +2,7 @@
 
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/splash.JPG)
 132 APA102 LED panels, 680 pixels per panel, 90,000 pixels, 300sqft, 4 Spartan 6 Mojo FPGAs
-
+[hackaday.io](https://hackaday.io/project/163657-hdmi-to-fpga-to-apa102)
 
 LED Wall at Oregon Museum of Science: https://photos.app.goo.gl/8hZoa7y9F9Lsg7Md9
 The creative director wanted to put the LED display behind a wood grain pattern. That way when the LEDs are off, there persists an unobtrusive wall to look at. To make this happen we used APA102 LEDs for their brightness. 
