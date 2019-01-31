@@ -4,7 +4,7 @@
 132 APA102 LED panels, 680 pixels per panel, 90,000 pixels, 300sqft, 4 Spartan 6 Mojo FPGAs
 [hackaday.io](https://hackaday.io/project/163657-hdmi-to-fpga-to-apa102)
 
-LED Wall at Oregon Museum of Science: https://photos.app.goo.gl/8hZoa7y9F9Lsg7Md9 (animation credit to yassi @ openprocessing.org)
+LED Wall at Oregon Museum of Science: https://photos.app.goo.gl/8hZoa7y9F9Lsg7Md9 (animation credit to [yassi @ openprocessing.org](https://www.openprocessing.org/user/65007))
 
 The creative director wanted to put the LED display behind a wood grain pattern similar to the wall at Microsoft HQ. When the LEDs are off the visitor sees a seemless, unobtrusive wall. To make the LEDs pop behind the wood grain graphic we used a very brigtht APA102.
 
