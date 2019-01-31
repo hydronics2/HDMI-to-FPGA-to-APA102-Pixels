@@ -5,8 +5,10 @@ We used 3 types of circuit boards.
 * A transmitter board that sends the clock and data signal out over RS485
 * A receiver board that has transceiver chips, takes the signals 
 
+
 ![shield](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/mojo_shield.png)
 Mojo Shield has all the pins broken out. We needed 33 SPI Data pins and the clock pin was shared across all the Panels.  The pins are broken out to 5.08mm phoenix connectors. The HDMI shield fits on the Mojo and this shield connects ontop of the HDMI shield. [Oshpark](https://oshpark.com/shared_projects/AGi8q5pp)
+
 
 
 ![transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS485_transmitter_board.png)
@@ -16,6 +18,7 @@ The transmitter board that takes two SPI signals (Clock and Data), passes the si
 
 * transmitter chip: Texas Instrument AM27LV31 296-24690-1-ND
 * RJ45 ethernet jack: 380-1316-5-ND
+
 
 
 ![receiver](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS845_receiver_board.png)
