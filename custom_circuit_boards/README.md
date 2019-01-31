@@ -19,11 +19,14 @@ The transmitter board that takes two SPI signals (Clock and Data), passes the si
 
 * transmitter chip: Texas Instrument AM27LV31 296-24690-1-ND
 * RJ45 ethernet jack: 380-1316-5-ND
+* 
 
 
 
 ![receiver](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS845_receiver_board.png)
-The receiver board receives RS485 signals via a RJ485 ethernet jack. Converts the two differential pairs back into clock and data SPI signals and connects to one LED panel. The board also has a DC-to-DC converter that takes 45V to 5V to supply to the LED panel. [Oshpark](https://oshpark.com/shared_projects/qSwC1Fum)
+![receiver schematic](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/receiver_schematic.JPG)
+
+The receiver board receives RS485 signals via a RJ485 ethernet jack. Converts the two differential pairs back into clock and data SPI signals and connects to one LED panel. The board also has a DC-to-DC converter that takes 45V to 5V to supply to the LED panel. I did not put the TVS protection diodes on the boards but added them on just the last few boards I made when troubleshooting noise issues.  Also, in addition to the 120ohm termination resistors on the RS485 bus, the original boards have 4.7k pullup and pulldown resistors on the bus. Modern RS485 chips should be able to infer the idle state these resistors are meant to inform so I left them out. [Oshpark](https://oshpark.com/shared_projects/qSwC1Fum)
 
 * Trnsceiver Chip: SP485EN, 1016-1829-1-ND
 * RJ45 Ethernet Jack: 380-1316-5-ND
