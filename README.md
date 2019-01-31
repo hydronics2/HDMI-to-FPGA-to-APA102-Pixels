@@ -5,7 +5,7 @@
 [hackaday.io](https://hackaday.io/project/163657-hdmi-to-fpga-to-apa102)
 
 LED Wall at Oregon Museum of Science: https://photos.app.goo.gl/8hZoa7y9F9Lsg7Md9
-The creative director wanted to put the LED display behind a wood grain pattern. That way when the LEDs are off, there persists an unobtrusive wall to look at. To make this happen we used APA102 LEDs for their brightness. 
+The creative director wanted to put the LED display behind a wood grain pattern similar to the wall at Microsoft HQ. When the LEDs are off the visitor sees a seemless, unobtrusive wall. To make the LEDs pop behind the wood grain graphic we used a very brigtht APA102.
 
 The resolution is about 24' wide by 14' high. That's 408 pixels wide 220 pixels tall. Not quite VGA. 
 
