@@ -12,6 +12,7 @@ Mojo Shield has all the pins broken out. We needed 33 SPI Data pins and the cloc
 
 
 ![transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS485_transmitter_board.png)
+![schematic](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/transmitter_schematic.JPG)
 
 The transmitter board that takes two SPI signals (Clock and Data), passes the signals through a RS485 transmitter chip. The differential signals are routed to an ethernet jack. This board could have been integrated into the Mojo shield to reduce noise but my disigning, programming, prototyping, and installing timelines compressed the schedule and I had to learn as I went. [Oshpark](https://oshpark.com/shared_projects/nhExJAWv)
 
