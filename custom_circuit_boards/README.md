@@ -14,7 +14,7 @@ Mojo Shield has all the pins broken out. We needed 33 SPI Data pins and the cloc
 ![transmitter](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS485_transmitter_board.png)
 ![schematic](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/transmitter_schematic.JPG)
 
-The transmitter board that takes two SPI signals (Clock and Data), passes the signals through a RS485 transmitter chip. The differential signals are routed to an ethernet jack. This board could have been integrated into the Mojo shield to reduce noise but my disigning, programming, prototyping, and installing timelines compressed the schedule and I had to learn as I went. [Oshpark](https://oshpark.com/shared_projects/nhExJAWv)
+The transmitter board takes two SPI signals (Clock and Data) and passes the signals through an RS485 transmitter chip. The differential signals are routed to an ethernet jack. This board could have been integrated into the Mojo shield to reduce noise but my disigning, programming, prototyping, and installing timelines compressed the schedule and I had to learn as I went. [Oshpark](https://oshpark.com/shared_projects/nhExJAWv)
 
 
 * transmitter chip: Texas Instrument AM27LV31 296-24690-1-ND
@@ -26,7 +26,7 @@ The transmitter board that takes two SPI signals (Clock and Data), passes the si
 ![receiver](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/RS845_receiver_board.png)
 ![receiver schematic](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/custom_circuit_boards/receiver_schematic.JPG)
 
-The receiver board receives RS485 signals via a RJ485 ethernet jack. Converts the two differential pairs back into clock and data SPI signals and connects to one LED panel. The board also has a DC-to-DC converter that takes 45V to 5V to supply to the LED panel. I did not put the TVS protection diodes on the boards but added them on just the last few boards I made when troubleshooting noise issues.  Also, in addition to the 120ohm termination resistors on the RS485 bus, the original boards have 4.7k pullup and pulldown resistors on the bus. Modern RS485 chips should be able to infer the idle state these resistors are meant to inform so I left them out. [Oshpark](https://oshpark.com/shared_projects/qSwC1Fum)
+The receiver board receives RS485 signals via a RJ485 ethernet jack. Converts the two differential pairs back into clock and data SPI signals and connects to one LED panel. The board also has a DC-to-DC converter that takes 45V to 5V to supply to the LED panel. I did not put the TVS protection diodes on the boards but added them on just the last few boards I made when troubleshooting noise issues.  Also, in addition to the 120ohm termination resistors on the RS485 bus, the original boards have 4.7k pullup and pulldown resistors on the bus. Modern RS485 chips have whats called "failsafe" against idle(no Data) conditions that these resistors are meant to deter.... so I left them out of these last few single signal boards shown here. [Oshpark](https://oshpark.com/shared_projects/qSwC1Fum)
 
 * Trnsceiver Chip: SP485EN, 1016-1829-1-ND
 * RJ45 Ethernet Jack: 380-1316-5-ND
