@@ -1,4 +1,4 @@
-# Oregon Museum of Science (OMSI) - giant LED wall
+# Oregon Museum of Science & Industry (OMSI) - giant LED wall
 
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/splash.JPG)
 132 APA102 LED panels, 680 pixels per panel, 90,000 pixels, 300sqft, 4 Spartan 6 Mojo FPGAs
