@@ -3,6 +3,9 @@
 [![Foo](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/matrix_video.JPG)](https://photos.app.goo.gl/FNSjgucNsmASgbaz8)
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/splash.JPG)
 ![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/women_in_science.png)
+![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/women_in_science2.JPG)
+![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/sunset.JPG)
+![splash](https://github.com/hydronics2/HDMI-to-FPGA-to-APA102-Pixels/blob/master/pics/cartoon.png)
 132 APA102 LED panels, 680 pixels per panel, 90,000 pixels, 300sqft, 4 Spartan 6 Mojo FPGAs
 [hackaday.io](https://hackaday.io/project/163657-hdmi-to-fpga-to-apa102)
 
